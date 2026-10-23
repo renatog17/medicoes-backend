@@ -1,0 +1,862 @@
+{
+    "info":  {
+                 "name":  "Medicoes API",
+                 "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+                 "description":  "Colecao para importacao no Bruno. Execute as requisicoes individualmente. Crie cliente, imovel e medidor, copie os IDs para as variaveis e depois crie uma instalacao. Registre a medicao 0 (referencia inicial), depois as proximas medicoes e por fim encerre a instalacao. Copie o ID de cada medicao que deseja consultar para medicaoId. Clientes, imoveis e medidores usam exclusao logica. CIN e numero de serie permanecem reservados apos exclusao. Respostas de erro: 400 dados invalidos ou periodo invalido, 404 recurso inexistente ou cadastro excluido, 409 conflito. Instalacoes e medicoes preservam o historico; nao ha PUT ou DELETE para esses recursos."
+             },
+    "auth":  {
+                 "type":  "noauth"
+             },
+    "variable":  [
+                     {
+                         "key":  "baseUrl",
+                         "value":  "http://localhost:8080/api",
+                         "type":  "string"
+                     },
+                     {
+                         "key":  "clienteId",
+                         "value":  "",
+                         "type":  "string"
+                     },
+                     {
+                         "key":  "imovelId",
+                         "value":  "",
+                         "type":  "string"
+                     },
+                     {
+                         "key":  "medidorId",
+                         "value":  "",
+                         "type":  "string"
+                     },
+                     {
+                         "key":  "instalacaoId",
+                         "value":  "",
+                         "type":  "string"
+                     },
+                     {
+                         "key":  "medicaoId",
+                         "value":  "",
+                         "type":  "string"
+                     }
+                 ],
+    "item":  [
+                 {
+                     "name":  "Clientes",
+                     "item":  [
+                                  {
+                                      "name":  "Listar clientes",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/clientes?page=0\u0026size=20",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "clientes"
+                                                                           ],
+                                                                  "query":  [
+                                                                                {
+                                                                                    "key":  "page",
+                                                                                    "value":  "0"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "size",
+                                                                                    "value":  "20"
+                                                                                }
+                                                                            ]
+                                                              },
+                                                      "description":  "Retorna 200 com pagina contendo apenas registros nao excluidos, inclusive no total. size: 1 a 100; page inicia em zero."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Criar clientes",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/clientes",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "clientes"
+                                                                           ]
+                                                              },
+                                                      "description":  "Retorna 201. Copie o id da resposta para clienteId. CIN obrigatorio: CPF valido com exatamente 11 digitos, sem mascara ou espacos. CIN duplicado retorna 409, inclusive quando pertence a cliente excluido. Use outro CIN valido em novas criacoes.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"nome\": \"Ana\",\n  \"cin\": \"52998224725\",\n  \"email\": \"ana@example.com\",\n  \"telefone\": \"71999999999\",\n  \"enderecoCobranca\": {\n    \"logradouro\": \"Rua A\",\n    \"numero\": \"10\",\n    \"complemento\": null,\n    \"bairro\": \"Centro\",\n    \"cidade\": \"Salvador\",\n    \"uf\": \"BA\",\n    \"cep\": \"40000000\"\n  }\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Consultar por ID",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/clientes/{{clienteId}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "clientes",
+                                                                               "{{clienteId}}"
+                                                                           ]
+                                                              },
+                                                      "description":  "Preencha a variavel de ID com um registro nao excluido. Retorna 200 ou 404 para registro inexistente ou excluido."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Atualizar por ID",
+                                      "request":  {
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/clientes/{{clienteId}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "clientes",
+                                                                               "{{clienteId}}"
+                                                                           ]
+                                                              },
+                                                      "description":  "Retorna 200. Substitui os campos editaveis; opcionais omitidos ficam nulos. Retorna 404 para registro inexistente ou excluido. CIN obrigatorio: CPF valido com exatamente 11 digitos, sem mascara ou espacos. Pode manter o proprio CIN; CIN de outro cliente, inclusive excluido, retorna 409.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"nome\": \"Ana\",\n  \"cin\": \"52998224725\",\n  \"email\": \"ana@example.com\",\n  \"telefone\": \"71999999999\",\n  \"enderecoCobranca\": {\n    \"logradouro\": \"Rua A\",\n    \"numero\": \"10\",\n    \"complemento\": null,\n    \"bairro\": \"Centro\",\n    \"cidade\": \"Salvador\",\n    \"uf\": \"BA\",\n    \"cep\": \"40000000\"\n  }\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Excluir por ID",
+                                      "request":  {
+                                                      "method":  "DELETE",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/clientes/{{clienteId}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "clientes",
+                                                                               "{{clienteId}}"
+                                                                           ]
+                                                              },
+                                                      "description":  "Exclusao logica: retorna 204 e preserva os dados. O registro deixa de aparecer nas listagens; consultar, atualizar ou excluir novamente retorna 404. Retorna 409 se houver instalacao vinculada, inclusive encerrada. Execute manualmente apenas no registro desejado. O CIN permanece reservado."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Imoveis",
+                     "item":  [
+                                  {
+                                      "name":  "Listar imoveis",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/imoveis?page=0\u0026size=20",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "imoveis"
+                                                                           ],
+                                                                  "query":  [
+                                                                                {
+                                                                                    "key":  "page",
+                                                                                    "value":  "0"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "size",
+                                                                                    "value":  "20"
+                                                                                }
+                                                                            ]
+                                                              },
+                                                      "description":  "Retorna 200 com pagina contendo apenas registros nao excluidos, inclusive no total. size: 1 a 100; page inicia em zero."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Criar imoveis",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/imoveis",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "imoveis"
+                                                                           ]
+                                                              },
+                                                      "description":  "Retorna 201. Endereco obrigatorio. Copie o id da resposta para imovelId.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"endereco\": {\n    \"logradouro\": \"Rua A\",\n    \"numero\": \"10\",\n    \"complemento\": null,\n    \"bairro\": \"Centro\",\n    \"cidade\": \"Salvador\",\n    \"uf\": \"BA\",\n    \"cep\": \"40000000\"\n  }\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Consultar por ID",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/imoveis/{{imovelId}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "imoveis",
+                                                                               "{{imovelId}}"
+                                                                           ]
+                                                              },
+                                                      "description":  "Preencha a variavel de ID com um registro nao excluido. Retorna 200 ou 404 para registro inexistente ou excluido."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Atualizar por ID",
+                                      "request":  {
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/imoveis/{{imovelId}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "imoveis",
+                                                                               "{{imovelId}}"
+                                                                           ]
+                                                              },
+                                                      "description":  "Retorna 200. Substitui os campos editaveis; opcionais omitidos ficam nulos. Retorna 404 para registro inexistente ou excluido.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"endereco\": {\n    \"logradouro\": \"Rua A\",\n    \"numero\": \"10\",\n    \"complemento\": null,\n    \"bairro\": \"Centro\",\n    \"cidade\": \"Salvador\",\n    \"uf\": \"BA\",\n    \"cep\": \"40000000\"\n  }\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Excluir por ID",
+                                      "request":  {
+                                                      "method":  "DELETE",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/imoveis/{{imovelId}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "imoveis",
+                                                                               "{{imovelId}}"
+                                                                           ]
+                                                              },
+                                                      "description":  "Exclusao logica: retorna 204 e preserva os dados. O registro deixa de aparecer nas listagens; consultar, atualizar ou excluir novamente retorna 404. Retorna 409 se houver instalacao vinculada, inclusive encerrada. Execute manualmente apenas no registro desejado."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Medidores",
+                     "item":  [
+                                  {
+                                      "name":  "Listar medidores",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/medidores?page=0\u0026size=20",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "medidores"
+                                                                           ],
+                                                                  "query":  [
+                                                                                {
+                                                                                    "key":  "page",
+                                                                                    "value":  "0"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "size",
+                                                                                    "value":  "20"
+                                                                                }
+                                                                            ]
+                                                              },
+                                                      "description":  "Retorna 200 com pagina contendo apenas registros nao excluidos, inclusive no total. size: 1 a 100; page inicia em zero."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Criar medidores",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/medidores",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "medidores"
+                                                                           ]
+                                                              },
+                                                      "description":  "Retorna 201. Copie o id da resposta para medidorId. numeroSerie obrigatorio e unico; use uma serie diferente a cada criacao. Serie duplicada retorna 409, inclusive quando pertence a medidor excluido.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"numeroSerie\": \"BRUNO-001\",\n  \"fabricante\": \"Exemplo\",\n  \"modelo\": \"Modelo A\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Consultar por ID",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/medidores/{{medidorId}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "medidores",
+                                                                               "{{medidorId}}"
+                                                                           ]
+                                                              },
+                                                      "description":  "Preencha a variavel de ID com um registro nao excluido. Retorna 200 ou 404 para registro inexistente ou excluido."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Atualizar por ID",
+                                      "request":  {
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/medidores/{{medidorId}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "medidores",
+                                                                               "{{medidorId}}"
+                                                                           ]
+                                                              },
+                                                      "description":  "Retorna 200. Substitui os campos editaveis; opcionais omitidos ficam nulos. Retorna 404 para registro inexistente ou excluido. Pode manter o proprio numeroSerie; serie de outro medidor, inclusive excluido, retorna 409.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"numeroSerie\": \"BRUNO-001\",\n  \"fabricante\": \"Exemplo\",\n  \"modelo\": \"Modelo A\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Excluir por ID",
+                                      "request":  {
+                                                      "method":  "DELETE",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/medidores/{{medidorId}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "medidores",
+                                                                               "{{medidorId}}"
+                                                                           ]
+                                                              },
+                                                      "description":  "Exclusao logica: retorna 204 e preserva os dados. O registro deixa de aparecer nas listagens; consultar, atualizar ou excluir novamente retorna 404. Retorna 409 se houver instalacao vinculada, inclusive encerrada. Execute manualmente apenas no registro desejado. O numero de serie permanece reservado."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Instalacoes",
+                     "item":  [
+                                  {
+                                      "name":  "Listar instalacoes",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/instalacoes?page=0\u0026size=20",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "instalacoes"
+                                                                           ],
+                                                                  "query":  [
+                                                                                {
+                                                                                    "key":  "page",
+                                                                                    "value":  "0"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "size",
+                                                                                    "value":  "20"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "clienteId",
+                                                                                    "value":  "{{clienteId}}",
+                                                                                    "disabled":  true
+                                                                                },
+                                                                                {
+                                                                                    "key":  "imovelId",
+                                                                                    "value":  "{{imovelId}}",
+                                                                                    "disabled":  true
+                                                                                },
+                                                                                {
+                                                                                    "key":  "medidorId",
+                                                                                    "value":  "{{medidorId}}",
+                                                                                    "disabled":  true
+                                                                                },
+                                                                                {
+                                                                                    "key":  "ativa",
+                                                                                    "value":  "true",
+                                                                                    "disabled":  true
+                                                                                }
+                                                                            ]
+                                                              },
+                                                      "description":  "Retorna 200. Habilite os filtros opcionais clienteId, imovelId, medidorId e ativa conforme necessario. size: 1 a 100; page inicia em zero. O filtro ativa e o campo ativa da resposta ainda sao calculados por dataFim: true quando nula, false quando preenchida. O atributo ativo da entidade ainda nao integra o contrato da API."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Criar instalacao",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/instalacoes",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "instalacoes"
+                                                                           ]
+                                                              },
+                                                      "description":  "Retorna 201. Crie os tres cadastros antes e configure seus IDs; cliente, imovel e medidor devem existir e nao estar excluidos, caso contrario retorna 404. Copie o ID retornado para instalacaoId. Um medidor so pode ter uma instalacao aberta; conflito retorna 409. dataInicio obrigatoria em formato ISO-8601. Nao envie ativo: esse atributo ainda nao integra o contrato da API.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"clienteId\": {{clienteId}},\n  \"imovelId\": {{imovelId}},\n  \"medidorId\": {{medidorId}},\n  \"dataInicio\": \"2026-10-17T12:00:00Z\",\n  \"observacoes\": \"Teste manual pelo Bruno\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Consultar por ID",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/instalacoes/{{instalacaoId}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "instalacoes",
+                                                                               "{{instalacaoId}}"
+                                                                           ]
+                                                              },
+                                                      "description":  "Retorna 200 ou 404. A resposta inclui o historico da instalacao. O campo ativa ainda e calculado por dataFim, independentemente do atributo ativo persistido na entidade."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Encerrar instalacao",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/instalacoes/{{instalacaoId}}/encerramento",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "instalacoes",
+                                                                               "{{instalacaoId}}",
+                                                                               "encerramento"
+                                                                           ]
+                                                              },
+                                                      "description":  "Retorna 200 e preserva o historico. dataFim obrigatoria em formato ISO-8601 e posterior a dataInicio, sem anteceder a ultima medicao; periodo invalido retorna 400. Instalacao ja encerrada retorna 409. O encerramento preenche dataFim e a resposta passa a ter ativa=false; o atributo ativo da entidade ainda nao e atualizado por esta operacao. Nao ha PUT ou DELETE de instalacoes.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"dataFim\": \"2026-10-17T13:00:00Z\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Medicoes",
+                     "item":  [
+                                  {
+                                      "name":  "Listar medicoes",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/medicoes?page=0\u0026size=20",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "medicoes"
+                                                                           ],
+                                                                  "query":  [
+                                                                                {
+                                                                                    "key":  "page",
+                                                                                    "value":  "0"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "size",
+                                                                                    "value":  "20"
+                                                                                },
+                                                                                {
+                                                                                    "key":  "instalacaoId",
+                                                                                    "value":  "{{instalacaoId}}",
+                                                                                    "disabled":  true
+                                                                                }
+                                                                            ]
+                                                              },
+                                                      "description":  "Retorna 200 com content, page, size, totalElements e totalPages. Ordenacao por ID crescente. page inicia em zero; size de 1 a 100. Habilite o filtro opcional instalacaoId para consultar somente as medicoes de uma instalacao."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Criar medicao 0 (referencia inicial)",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/medicoes",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "medicoes"
+                                                                           ]
+                                                              },
+                                                      "description":  "Retorna 201 com Location. Configure instalacaoId com uma instalacao existente e sem medicoes. A medicao 0 e a primeira leitura da instalacao; nao significa ID zero nem leitura obrigatoriamente zero. Leitura obrigatoria e nao negativa, com ate 13 digitos inteiros e 6 decimais. dataMedicao obrigatoria em ISO-8601 e dentro do periodo da instalacao, inclusive os limites. O exemplo coincide com dataInicio da instalacao da colecao. Copie o id retornado para medicaoId. A resposta contem id, instalacaoId, dataMedicao e leitura, sem consumo ou numeracao especial. Instalacao inexistente retorna 404; dados ou periodo invalidos retornam 400. Nao ha PUT ou DELETE de medicoes.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"instalacaoId\": {{instalacaoId}},\n  \"dataMedicao\": \"2026-10-17T12:00:00Z\",\n  \"leitura\": 100\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Criar proxima medicao",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/medicoes",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "medicoes"
+                                                                           ]
+                                                              },
+                                                      "description":  "Execute apos a referencia inicial. Retorna 201 com Location. dataMedicao deve ser estritamente posterior a ultima medicao e estar dentro do periodo da instalacao; leitura deve ser maior ou igual a anterior, nao negativa, com ate 13 digitos inteiros e 6 decimais. Nao aceita insercao retroativa. O exemplo ocorre antes do encerramento da colecao, as 13:00Z. Repetir a mesma data ou reduzir a leitura retorna 409. Dados ou periodo invalidos retornam 400; instalacao inexistente retorna 404. Copie o id retornado para medicaoId para consultar esta medicao. Instalacoes encerradas aceitam registros dentro do periodo, respeitando a sequencia.",
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"instalacaoId\": {{instalacaoId}},\n  \"dataMedicao\": \"2026-10-17T12:30:00Z\",\n  \"leitura\": 110\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Consultar por ID",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "url":  {
+                                                                  "raw":  "{{baseUrl}}/medicoes/{{medicaoId}}",
+                                                                  "host":  [
+                                                                               "{{baseUrl}}"
+                                                                           ],
+                                                                  "path":  [
+                                                                               "medicoes",
+                                                                               "{{medicaoId}}"
+                                                                           ]
+                                                              },
+                                                      "description":  "Preencha medicaoId com o ID retornado ao cadastrar uma medicao. Retorna 200 com id, instalacaoId, dataMedicao e leitura; medicao inexistente retorna 404. A referencia inicial tambem possui ID gerado pelo banco, diferente de zero."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  }
+                              ]
+                 }
+             ]
+}
