@@ -1,3 +1,7 @@
+app:
+  time:
+    zone: America/Bahia
+
 spring:
   application:
     name: medicoes-api

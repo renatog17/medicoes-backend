@@ -245,6 +245,20 @@ class MedicoesApiApplicationTests {
     @Autowired org.springframework.transaction.PlatformTransactionManager transactionManager;
 
     @Test
+    void limitaMedicaoMensalPorInstalacao() {
+        var primeira = criarEntidade("M-MENSAL-1");
+        var segunda = criarEntidade("M-MENSAL-2");
+        var janeiro = Instant.parse("2026-01-15T12:00:00Z");
+        medicoes.criar(new MedicaoRequest(primeira.getId(), janeiro, java.math.BigDecimal.TEN));
+        medicoes.criar(new MedicaoRequest(segunda.getId(), janeiro, java.math.BigDecimal.TEN));
+        assertThrows(ConflitoException.class, () -> medicoes.criar(new MedicaoRequest(
+                primeira.getId(), Instant.parse("2026-02-01T02:59:59Z"), java.math.BigDecimal.TEN)));
+        medicoes.criar(new MedicaoRequest(primeira.getId(), Instant.parse("2026-02-01T03:00:00Z"), java.math.BigDecimal.TEN));
+        assertEquals(2, medicoes.listar(0, 20, primeira.getId()).totalElements());
+        assertEquals(1, medicoes.listar(0, 20, segunda.getId()).totalElements());
+    }
+
+    @Test
     void medicoesConcorrentesCriamUmaUnicaReferencia() throws Exception {
         var instalacao = criarEntidade("M-CONCORRENCIA-MEDICAO");
         var request = new MedicaoRequest(instalacao.getId(), instalacao.getDataInicio(), java.math.BigDecimal.TEN);

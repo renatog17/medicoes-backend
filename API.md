@@ -135,7 +135,7 @@ campo de numeração da medição.
     {
       "id": 11,
       "instalacaoId": 1,
-      "dataMedicao": "2026-10-14T12:30:00Z",
+      "dataMedicao": "2026-11-14T12:30:00Z",
       "leitura": 110
     }
   ],
@@ -162,6 +162,9 @@ existência da instalação.
   `dataInicio` e, se houver `dataFim`, igual ou anterior a ela.
 - Após a referência inicial, a data deve ser estritamente posterior à última
   medição da instalação. Não é permitida inserção retroativa ou na mesma data.
+- Cada instalação aceita apenas uma medição por mês e ano, considerando o
+  fuso configurado em `app.time.zone` (padrão: `America/Bahia`). Uma segunda
+  medição no mesmo mês retorna 409, mesmo com data posterior.
 - A leitura não pode diminuir em relação à última medição. Leituras iguais
   são permitidas, desde que a data seja posterior.
 - Instalações encerradas aceitam novas medições dentro de seu período,
@@ -202,7 +205,7 @@ Nem todo erro 400 inclui `errors`.
 |---|---|
 | 400 | Campos inválidos, leitura negativa ou fora da precisão, data fora do período, parâmetros de paginação/filtro inválidos |
 | 404 | Instalação inexistente no cadastro ou medição inexistente na consulta por ID |
-| 409 | Data igual/anterior à última medição, leitura menor que a anterior ou conflito de persistência/concorrência |
+| 409 | Data igual/anterior à última medição, mês já cadastrado, leitura menor que a anterior ou conflito de persistência/concorrência |
 
 Exemplo de conflito de sequência:
 

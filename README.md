@@ -1,5 +1,12 @@
 # Medicoes API
 
+O fuso da aplicação é configurado por `app.time.zone` (variável de ambiente
+`APP_TIME_ZONE`), com padrão `America/Bahia`. Um bean `Clock` fica disponível
+para injeção: use `LocalDate.now(clock)` e `LocalDateTime.now(clock)` nos
+componentes que precisam da data/hora atual. Em testes, forneça um
+`Clock.fixed(instant, zone)` para obter resultados determinísticos. Em produção,
+o relógio usa a hora real do sistema com o fuso configurado.
+
 ## Run with Docker Engine in Ubuntu WSL 2
 
 Run these commands in your Ubuntu WSL terminal. This setup uses the existing

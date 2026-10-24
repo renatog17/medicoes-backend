@@ -4,6 +4,8 @@ import com.rohub.medicoes.medicoes_api.domain.Medicao;
 import com.rohub.medicoes.medicoes_api.dto.*;
 import com.rohub.medicoes.medicoes_api.exception.*;
 import com.rohub.medicoes.medicoes_api.repository.*;
+import java.time.Clock;
+import java.time.YearMonth;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,10 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class MedicaoService {
     private final MedicaoRepository medicoes;
     private final InstalacaoRepository instalacoes;
+    private final Clock clock;
 
-    public MedicaoService(MedicaoRepository medicoes, InstalacaoRepository instalacoes) {
+    public MedicaoService(MedicaoRepository medicoes, InstalacaoRepository instalacoes, Clock clock) {
         this.medicoes = medicoes;
         this.instalacoes = instalacoes;
+        this.clock = clock;
     }
 
     public MedicaoResponse buscar(Long id) {
@@ -42,6 +46,11 @@ public class MedicaoService {
         medicoes.findFirstByInstalacaoIdOrderByDataMedicaoDescIdDesc(request.instalacaoId()).ifPresent(ultima -> {
             if (!request.dataMedicao().isAfter(ultima.getDataMedicao())) {
                 throw new ConflitoException("Data da medicao deve ser posterior a ultima medicao");
+            }
+            var mesSolicitado = YearMonth.from(request.dataMedicao().atZone(clock.getZone()));
+            var mesUltimaMedicao = YearMonth.from(ultima.getDataMedicao().atZone(clock.getZone()));
+            if (mesSolicitado.equals(mesUltimaMedicao)) {
+                throw new ConflitoException("Ja existe uma medicao para esta instalacao neste mes");
             }
             if (request.leitura().compareTo(ultima.getLeitura()) < 0) {
                 throw new ConflitoException("Leitura nao pode ser menor que a ultima medicao");
