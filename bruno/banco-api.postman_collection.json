@@ -1,0 +1,253 @@
+{
+  "info": {
+    "name": "Banco - Cobranças Pix (simulação)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Coleção para importação no Bruno como Postman Collection v2.1. Execute as requisições individualmente. Configure baseUrl, bancoToken e operadorToken nas variáveis da coleção. Registre uma cobrança e copie o id retornado para cobrancaId. Use uma cobrança diferente para cada simulação de pagamento, cancelamento e expiração. As simulações exigem o perfil Spring simulacao e token operador do mesmo credor. Não movimenta dinheiro real."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bancoToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9090",
+      "type": "string"
+    },
+    {
+      "key": "referenciaExterna",
+      "value": "fatura-bruno-001",
+      "type": "string"
+    },
+    {
+      "key": "cobrancaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bancoToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "operadorToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Registrar cobranca",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{referenciaExterna}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cobrancas",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cobrancas"
+          ]
+        },
+        "description": "Cria uma cobrança (201) ou recupera uma repetição idêntica (200). Copie o id retornado para a variável cobrancaId. Para criar outra cobrança, altere referenciaExterna nas variáveis da coleção e copie o novo ID. A referência e o header Idempotency-Key usam a mesma variável. Mesmo identificador com conteúdo diferente retorna 409. Vencimento passado é aceito. O código Pix retornado é apenas de simulação.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"referenciaExterna\": \"{{referenciaExterna}}\",\n  \"valor\": 48.75,\n  \"moeda\": \"BRL\",\n  \"vencimento\": \"2026-11-10\",\n  \"pagador\": {\n    \"nome\": \"Ana Silva\",\n    \"documento\": \"12345678909\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar cobranca por ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cobrancas/{{cobrancaId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cobrancas",
+            "{{cobrancaId}}"
+          ]
+        },
+        "description": "Retorna o estado atual da cobrança do credor autenticado. Execute Registrar cobranca antes e copie o id da resposta para cobrancaId nas variáveis da coleção, ou informe o ID de uma cobrança existente."
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar cobranca por referencia",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cobrancas?referenciaExterna={{referenciaExterna}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cobrancas"
+          ],
+          "query": [
+            {
+              "key": "referenciaExterna",
+              "value": "{{referenciaExterna}}"
+            }
+          ]
+        },
+        "description": "Recupera um objeto unico pela referencia, inclusive apos timeout no registro. Retorna 404 se a referencia nao existir para o credor autenticado."
+      },
+      "response": []
+    },
+    {
+      "name": "Simular pagamento integral",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/simulacao/cobrancas/{{cobrancaId}}/pagar",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "simulacao",
+            "cobrancas",
+            "{{cobrancaId}}",
+            "pagar"
+          ]
+        },
+        "description": "Exige o perfil simulacao e um token operador do mesmo credor. Nao recebe corpo: o servidor registra o valor integral e o instante UTC atual. PENDENTE passa a PAGA. Repetir o pagamento retorna o mesmo estado. Uma cobranca cancelada ou expirada retorna 409. Nao movimenta dinheiro real.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operadorToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Simular cancelamento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/simulacao/cobrancas/{{cobrancaId}}/cancelar",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "simulacao",
+            "cobrancas",
+            "{{cobrancaId}}",
+            "cancelar"
+          ]
+        },
+        "description": "Exige o perfil simulacao e um token operador do mesmo credor. PENDENTE passa a CANCELADA sem quitar a cobranca. Use outra referencia e registre uma nova cobranca se ja simulou pagamento. Repetir o cancelamento retorna o mesmo estado. Outros estados finais retornam 409.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operadorToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Simular expiracao",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/simulacao/cobrancas/{{cobrancaId}}/expirar",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "simulacao",
+            "cobrancas",
+            "{{cobrancaId}}",
+            "expirar"
+          ]
+        },
+        "description": "Exige o perfil simulacao e um token operador do mesmo credor. PENDENTE passa a EXPIRADA sem quitar a cobranca, independentemente do vencimento. Use outra referencia e registre uma nova cobranca se ela ja foi paga ou cancelada. Repetir a expiracao retorna o mesmo estado. Outros estados finais retornam 409.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{operadorToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

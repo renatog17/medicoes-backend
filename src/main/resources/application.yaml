@@ -1,6 +1,13 @@
 app:
-  time:
-    zone: America/Bahia
+  faturamento:
+    habilitado: ${FATURAMENTO_HABILITADO:false}
+    valor-m3: ${FATURAMENTO_VALOR_M3:}
+  banco:
+    habilitado: ${BANCO_HABILITADO:false}
+    url: ${BANCO_URL:http://localhost:9090}
+    token: ${BANCO_TOKEN:}
+    timeout-ms: ${BANCO_TIMEOUT_MS:5000}
+    sincronizacao-ms: ${BANCO_SINCRONIZACAO_MS:900000}
 
 spring:
   application:

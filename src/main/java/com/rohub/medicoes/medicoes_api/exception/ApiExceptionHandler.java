@@ -10,6 +10,10 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 @RestControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+    @ExceptionHandler(com.rohub.medicoes.medicoes_api.integracao.BancoIndisponivelException.class)
+    public ProblemDetail bancoIndisponivel(Exception ex) {
+        return problema(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
     @ExceptionHandler(RecursoNaoEncontradoException.class)
     public ProblemDetail naoEncontrado(RecursoNaoEncontradoException ex) {
         return problema(HttpStatus.NOT_FOUND, ex.getMessage());

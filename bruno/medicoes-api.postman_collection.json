@@ -37,6 +37,16 @@
                          "key":  "medicaoId",
                          "value":  "",
                          "type":  "string"
+                     },
+                     {
+                         "key":  "faturaId",
+                         "value":  "",
+                         "type":  "string"
+                     },
+                     {
+                         "key":  "competencia",
+                         "value":  "2026-10",
+                         "type":  "string"
                      }
                  ],
     "item":  [
@@ -815,7 +825,7 @@
                                                                                "medicoes"
                                                                            ]
                                                               },
-                                                      "description":  "Execute apos a referencia inicial. Retorna 201 com Location. dataMedicao deve ser estritamente posterior a ultima medicao e estar dentro do periodo da instalacao; leitura deve ser maior ou igual a anterior, nao negativa, com ate 13 digitos inteiros e 6 decimais. Nao aceita insercao retroativa. O exemplo ocorre antes do encerramento da colecao, as 13:00Z. Repetir a mesma data ou reduzir a leitura retorna 409. Dados ou periodo invalidos retornam 400; instalacao inexistente retorna 404. Copie o id retornado para medicaoId para consultar esta medicao. Instalacoes encerradas aceitam registros dentro do periodo, respeitando a sequencia.",
+                                                      "description":  "Execute apos a referencia inicial. Retorna 201 com Location. dataMedicao deve ser estritamente posterior a ultima medicao e estar dentro do periodo da instalacao; leitura deve ser maior ou igual a anterior, nao negativa, com ate 13 digitos inteiros e 6 decimais. Nao aceita insercao retroativa. No mes da medicao 0, sao permitidas duas medicoes no total: a referencia inicial e uma mensal. A terceira retorna 409. Nos demais meses, uma segunda medicao retorna 409. Mes e ano seguem o fuso de Brasilia (America/Sao_Paulo). O exemplo ocorre no mesmo mes da referencia inicial e antes do encerramento da colecao, as 13:00Z. Repetir a mesma data ou reduzir a leitura retorna 409. Dados ou periodo invalidos retornam 400; instalacao inexistente retorna 404. Copie o id retornado para medicaoId para consultar esta medicao. Instalacoes encerradas aceitam registros dentro do periodo, respeitando a sequencia.",
                                                       "body":  {
                                                                    "mode":  "raw",
                                                                    "raw":  "{\n  \"instalacaoId\": {{instalacaoId}},\n  \"dataMedicao\": \"2026-10-17T12:30:00Z\",\n  \"leitura\": 110\n}",
@@ -851,6 +861,37 @@
                                                                            ]
                                                               },
                                                       "description":  "Preencha medicaoId com o ID retornado ao cadastrar uma medicao. Retorna 200 com id, instalacaoId, dataMedicao e leitura; medicao inexistente retorna 404. A referencia inicial tambem possui ID gerado pelo banco, diferente de zero."
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Faturas",
+                     "item":  [
+                                  {
+                                      "name":  "Listar faturas",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "url":  "{{baseUrl}}/faturas?page=0\u0026size=20\u0026competencia={{competencia}}"
+                                                  },
+                                      "response":  [
+
+                                                   ]
+                                  },
+                                  {
+                                      "name":  "Consultar fatura",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+
+                                                                 ],
+                                                      "url":  "{{baseUrl}}/faturas/{{faturaId}}"
                                                   },
                                       "response":  [
 

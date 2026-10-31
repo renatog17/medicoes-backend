@@ -1,16 +1,38 @@
 # Medicoes API
 
-O fuso da aplicação é configurado por `app.time.zone` (variável de ambiente
-`APP_TIME_ZONE`), com padrão `America/Bahia`. Um bean `Clock` fica disponível
-para injeção: use `LocalDate.now(clock)` e `LocalDateTime.now(clock)` nos
+## Faturamento mensal
+
+Configure `FATURAMENTO_HABILITADO=true` e `FATURAMENTO_VALOR_M3` com o preço
+real por metro cúbico. A emissão ocorre no dia 1 pelo consumo do mês anterior,
+com vencimento no dia 10. O processamento diário às 00:00:05 recupera falhas e
+leituras atrasadas do ciclo corrente. Emissão, registro Pix e sincronização são
+controlados internamente pela API, sem endpoints manuais.
+A primeira leitura é referência inicial. A tarifa fica preservada nas faturas.
+
+O faturamento e a integração bancária vêm desabilitados. Os parâmetros estão
+em `.env.example` e são repassados pelo Compose. Alterações exigem reiniciar
+(no Compose, recriar) a API. `BANCO_URL` deve ser acessível de dentro do contêiner;
+`localhost` dentro dele aponta para o próprio contêiner.
+
+Consulte [API.md](API.md) para as rotas de faturas e
+[INTEGRACAO_BANCARIA.md](INTEGRACAO_BANCARIA.md) para o contrato Pix que o
+sistema bancário fornece. O documento inclui configuração local (banco em
+`9090`, Medições em `8080`) e roteiro de validação no Bruno. A coleção Bruno
+inclui a pasta Faturas. A API bancária da coleção fornece Pix simulado.
+
+A aplicação usa a hora real de Brasília (`America/Sao_Paulo`), por meio de um
+bean `Clock`. Use `LocalDate.now(clock)` e `LocalDateTime.now(clock)` nos
 componentes que precisam da data/hora atual. Em testes, forneça um
-`Clock.fixed(instant, zone)` para obter resultados determinísticos. Em produção,
-o relógio usa a hora real do sistema com o fuso configurado.
+`Clock.fixed(instant, zone)` para obter resultados determinísticos.
+
+O faturamento é agendado diariamente às **00:00:05 de Brasília**, respeitando
+`FATURAMENTO_HABILITADO`. Não há recuperação de disparos perdidos enquanto a
+API esteve desligada. A sincronização bancária mantém seu intervalo configurado.
 
 ## Run with Docker Engine in Ubuntu WSL 2
 
-Run these commands in your Ubuntu WSL terminal. This setup uses the existing
-`postgres-dev` container with database `devdb` and user `devuser`. The API is
+Run these commands in your Ubuntu WSL terminal. Compose creates PostgreSQL 17
+with a new persistent volume, database `devdb` and user `devuser`. The API is
 built with Java 25 and the Maven wrapper; no host Java or Maven is required.
 
 From Windows PowerShell, open Ubuntu explicitly with `wsl.exe -d Ubuntu`.
@@ -34,30 +56,23 @@ Close and reopen your WSL login session, or run `newgrp docker`, then retry
 `docker info`. Docker group membership grants administrative access through
 Docker. If the daemon is stopped, run `sudo service docker start`.
 
-### Connect the existing database
-
-```sh
-docker start postgres-dev
-docker network inspect medicoes-dev >/dev/null 2>&1 || docker network create medicoes-dev
-```
-
-Check whether `postgres-dev` is already attached:
+### Check the existing network and ports
 
 ```sh
 docker network inspect medicoes-dev
+docker ps --format 'table {{.Names}}\t{{.Ports}}'
+ss -ltn '( sport = :5432 or sport = :8080 )'
 ```
 
-If `postgres-dev` is absent from the listed containers, attach it once:
+The external network `medicoes-dev` must exist before starting. If it is absent,
+create it with `docker network create medicoes-dev`. Ports 5432 and 8080 must be
+available. If the old `postgres-dev` container occupies port 5432, stop it with
+`docker stop postgres-dev`; its container and data volume are preserved.
 
-```sh
-docker network connect medicoes-dev postgres-dev
-```
+Compose creates its own `postgres-data` volume (prefixed by the project name).
+The database starts empty on the first run; old data is not imported.
 
-The existing `postgres-dev-data` volume is retained. This setup does not create
-or replace the database container. PostgreSQL must already contain `devdb` and
-`devuser`; use that user's existing password below.
-
-### Configure and start the API
+### Configure and start the API and PostgreSQL
 
 ```sh
 cd /mnt/c/Users/renat/Spring/medicoes-api/medicoes-api
@@ -65,7 +80,8 @@ cp -n .env.example .env
 nano .env
 ```
 
-Set `POSTGRES_PASSWORD` to the existing password for `devuser`. For passwords
+Set `POSTGRES_PASSWORD` to a strong password for the new database. Optionally set
+`POSTGRES_DB` and `POSTGRES_USER` (defaults: `devdb` and `devuser`). For passwords
 containing `$` or `#`, enclose the value in single quotes. The `.env` file is
 ignored by Git and excluded from the Docker build context.
 
@@ -76,9 +92,13 @@ docker compose ps
 docker compose logs -f api
 ```
 
-The API connects to `postgres-dev:5432` through the shared Docker network.
+The API waits for PostgreSQL to become healthy and connects to `postgres:5432`
+through the shared Docker network. Both services use the same database credentials.
 Compose overrides the local datasource defaults in `application.yaml`.
-Flyway applies pending migrations, then Hibernate validates the schema.
+Flyway creates the schema in the empty database and applies pending migrations,
+then Hibernate validates the schema. PostgreSQL initialization variables only
+take effect when the data volume is empty; changing `.env` does not update
+credentials in an existing database.
 
 From Windows or WSL, access `http://localhost:8080/api/clientes`:
 
@@ -91,7 +111,7 @@ for the available endpoints. To open a shell in the API or inspect PostgreSQL:
 
 ```sh
 docker compose exec api sh
-docker exec -it postgres-dev psql -U devuser -d devdb
+docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 ```
 
 ### Rebuild and stop
@@ -101,8 +121,11 @@ docker compose up -d --build api
 docker compose down
 ```
 
-Stopping this Compose project leaves `postgres-dev`, its data volume, and the
-external network in place. If port 8080 is occupied, stop the other application
+`docker compose down` removes both containers but preserves the database volume
+and external network. Starting again reuses the saved data. To deliberately
+delete this project's database and start empty, use `docker compose down -v`;
+this permanently removes its data volume. Old containers and external volumes
+are not removed. If port 8080 is occupied, stop the other application
 or change the host mapping to `127.0.0.1:8081:8080`.
 
 ## Importar endpoints no Bruno
@@ -130,7 +153,7 @@ alteram dados. Os IDs nao sao preenchidos automaticamente. No encerramento,
 nao podem ser excluidos, mesmo depois do encerramento (HTTP 409).
 
 As listagens incluem `page=0&size=20`; instalacoes tambem possuem filtros
-opcionais inicialmente desabilitados. A colecao contem 19 operacoes e deve ser
+opcionais inicialmente desabilitados. A colecao deve ser
 atualizada quando os endpoints ou DTOs mudarem. Consulte [API.md](API.md).
 
 ## Run tests
@@ -143,7 +166,7 @@ sh ./mvnw test
 ```
 
 Integration tests use a disposable PostgreSQL 17 Testcontainers instance,
-separate from `postgres-dev`. They are configured to skip without Docker;
+separate from the Compose database. They are configured to skip without Docker;
 check the Maven test report to confirm they ran.
 # medicoes-backend
 # medicoes-backend

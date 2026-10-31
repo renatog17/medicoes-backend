@@ -1,15 +1,44 @@
 services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-devdb}
+      POSTGRES_USER: ${POSTGRES_USER:-devuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - medicoes-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   api:
     build:
       context: .
-    image: medicoes-api-api:latest
+    image: medicoes-api:latest
     restart: unless-stopped
     ports:
       - "127.0.0.1:8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-dev:5432/devdb
-      SPRING_DATASOURCE_USERNAME: devuser
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-devdb}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-devuser}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      FATURAMENTO_HABILITADO: ${FATURAMENTO_HABILITADO:-false}
+      FATURAMENTO_VALOR_M3: ${FATURAMENTO_VALOR_M3:-}
+      BANCO_HABILITADO: ${BANCO_HABILITADO:-false}
+      BANCO_URL: ${BANCO_URL:-http://localhost:9090}
+      BANCO_TOKEN: ${BANCO_TOKEN:-}
+      BANCO_TIMEOUT_MS: ${BANCO_TIMEOUT_MS:-5000}
+      BANCO_SINCRONIZACAO_MS: ${BANCO_SINCRONIZACAO_MS:-900000}
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - medicoes-dev
 
@@ -17,3 +46,6 @@ networks:
   medicoes-dev:
     external: true
     name: medicoes-dev
+
+volumes:
+  postgres-data:

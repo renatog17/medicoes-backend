@@ -49,7 +49,10 @@ public class MedicaoService {
             }
             var mesSolicitado = YearMonth.from(request.dataMedicao().atZone(clock.getZone()));
             var mesUltimaMedicao = YearMonth.from(ultima.getDataMedicao().atZone(clock.getZone()));
-            if (mesSolicitado.equals(mesUltimaMedicao)) {
+            // A referencia inicial nao ocupa a medicao mensal da instalacao.
+            if (mesSolicitado.equals(mesUltimaMedicao)
+                    && medicoes.findFirstByInstalacaoIdAndDataMedicaoLessThanOrderByDataMedicaoDesc(
+                            request.instalacaoId(), ultima.getDataMedicao()).isPresent()) {
                 throw new ConflitoException("Ja existe uma medicao para esta instalacao neste mes");
             }
             if (request.leitura().compareTo(ultima.getLeitura()) < 0) {

@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 class MedicaoServiceTest {
     private final MedicaoRepository medicoes = mock(MedicaoRepository.class);
     private final InstalacaoRepository instalacoes = mock(InstalacaoRepository.class);
-    private final Clock clock = Clock.fixed(Instant.parse("2026-06-01T00:00:00Z"), ZoneId.of("America/Bahia"));
+    private final Clock clock = Clock.fixed(Instant.parse("2026-06-01T00:00:00Z"), ZoneId.of("America/Sao_Paulo"));
     private final MedicaoService service = new MedicaoService(medicoes, instalacoes, clock);
     private final Instant inicio = Instant.parse("2026-01-01T00:00:00Z");
     private final Instalacao instalacao = new Instalacao(new Cliente(), new Imovel(), new Medidor(), inicio);
@@ -84,20 +84,49 @@ class MedicaoServiceTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"2026-01-15T12:00:00Z", "2026-02-01T02:59:59Z"})
-    void rejeitaMesmoMesNaBahia(String data) {
+    void aceitaMensalNoMesDaReferenciaInicialNaBahia(String data) {
+        var referencia = new Medicao(instalacao, Instant.parse("2026-01-01T03:00:00Z"), BigDecimal.TEN);
         when(medicoes.findFirstByInstalacaoIdOrderByDataMedicaoDescIdDesc(1L))
-                .thenReturn(Optional.of(new Medicao(instalacao, Instant.parse("2026-01-01T03:00:00Z"), BigDecimal.TEN)));
+                .thenReturn(Optional.of(referencia));
+        when(medicoes.findFirstByInstalacaoIdAndDataMedicaoLessThanOrderByDataMedicaoDesc(1L, referencia.getDataMedicao()))
+                .thenReturn(Optional.empty());
+        assertEquals(Instant.parse(data), service.criar(
+                new MedicaoRequest(1L, Instant.parse(data), BigDecimal.TEN)).dataMedicao());
+        verify(medicoes).saveAndFlush(any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"2026-01-01T03:00:00Z", "2025-12-01T03:00:00Z"})
+    void rejeitaOutraMensalNoMesmoMesNaBahia(String dataReferencia) {
+        var referencia = new Medicao(instalacao, Instant.parse(dataReferencia), BigDecimal.ONE);
+        var mensal = new Medicao(instalacao, Instant.parse("2026-01-15T12:00:00Z"), BigDecimal.TEN);
+        when(medicoes.findFirstByInstalacaoIdOrderByDataMedicaoDescIdDesc(1L))
+                .thenReturn(Optional.of(mensal));
+        when(medicoes.findFirstByInstalacaoIdAndDataMedicaoLessThanOrderByDataMedicaoDesc(1L, mensal.getDataMedicao()))
+                .thenReturn(Optional.of(referencia));
         var erro = assertThrows(ConflitoException.class, () -> service.criar(
-                new MedicaoRequest(1L, Instant.parse(data), BigDecimal.TEN)));
+                new MedicaoRequest(1L, Instant.parse("2026-02-01T02:59:59Z"), BigDecimal.TEN)));
         assertEquals("Ja existe uma medicao para esta instalacao neste mes", erro.getMessage());
+        verify(medicoes, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void referenciaInicialNaoDispensaValidacaoDeLeituraNoMesmoMes() {
+        var referencia = new Medicao(instalacao, Instant.parse("2026-01-01T03:00:00Z"), BigDecimal.TEN);
+        when(medicoes.findFirstByInstalacaoIdOrderByDataMedicaoDescIdDesc(1L))
+                .thenReturn(Optional.of(referencia));
+        var erro = assertThrows(ConflitoException.class, () -> service.criar(
+                new MedicaoRequest(1L, Instant.parse("2026-01-15T12:00:00Z"), BigDecimal.ONE)));
+        assertEquals("Leitura nao pode ser menor que a ultima medicao", erro.getMessage());
         verify(medicoes, never()).saveAndFlush(any());
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"2026-02-01T03:00:00Z", "2027-01-01T03:00:00Z"})
     void aceitaOutroMesOuOutroAno(String data) {
+        var mensal = new Medicao(instalacao, Instant.parse("2026-01-31T23:00:00Z"), BigDecimal.TEN);
         when(medicoes.findFirstByInstalacaoIdOrderByDataMedicaoDescIdDesc(1L))
-                .thenReturn(Optional.of(new Medicao(instalacao, Instant.parse("2026-01-31T23:00:00Z"), BigDecimal.TEN)));
+                .thenReturn(Optional.of(mensal));
         assertEquals(Instant.parse(data), service.criar(
                 new MedicaoRequest(1L, Instant.parse(data), BigDecimal.TEN)).dataMedicao());
     }

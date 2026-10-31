@@ -162,9 +162,11 @@ existência da instalação.
   `dataInicio` e, se houver `dataFim`, igual ou anterior a ela.
 - Após a referência inicial, a data deve ser estritamente posterior à última
   medição da instalação. Não é permitida inserção retroativa ou na mesma data.
-- Cada instalação aceita apenas uma medição por mês e ano, considerando o
-  fuso configurado em `app.time.zone` (padrão: `America/Bahia`). Uma segunda
-  medição no mesmo mês retorna 409, mesmo com data posterior.
+- Cada instalação aceita uma medição mensal, além da referência inicial,
+  considerando mês e ano no fuso de Brasília (`America/Sao_Paulo`).
+  No mês da medição 0, são permitidas duas medições no total:
+  a referência inicial e uma mensal. A terceira retorna 409. Nos demais meses,
+  uma segunda medição retorna 409, mesmo com data posterior.
 - A leitura não pode diminuir em relação à última medição. Leituras iguais
   são permitidas, desde que a data seja posterior.
 - Instalações encerradas aceitam novas medições dentro de seu período,
@@ -220,3 +222,39 @@ Exemplo de conflito de sequência:
 ```
 
 No encerramento, `dataFim` anterior à última medição retorna 400.
+# Faturas mensais
+
+O faturamento usa a leitura acumulada em m³. O consumo é a diferença entre a
+leitura da competência e a leitura anterior disponível da instalação. A primeira
+leitura não gera cobrança. A competência `2026-10` tem emissão em `2026-11-01`
+e vencimento em `2026-11-10`. Valores são em BRL, arredondados com HALF_UP.
+
+| Método | Rota | Uso |
+|---|---|---|
+| GET | `/api/faturas` | Listar com `page`, `size`, `instalacaoId`, `competencia` e `situacao`. |
+| GET | `/api/faturas/{id}` | Consultar fatura e dados Pix. |
+
+As consultas retornam `200` em sucesso. Emissão, registro Pix e sincronização
+são controlados internamente pelos agendamentos da API. Não há endpoints
+manuais para essas ações. Falhas individuais não desfazem as demais faturas;
+as tentativas automáticas preservam as faturas existentes, sem duplicação.
+
+Uma fatura retorna `id`, `instalacaoId`, `clienteId`, `medicaoAnteriorId`,
+`medicaoAtualId`, `competencia`, `consumo`, `tarifa`, `total`, `emissao`,
+`vencimento`, `criadaEm`, `situacao`, `bancoId`, `pix`, `situacaoBancaria`,
+`valorPago`, `pagoEm`. Datas são `AAAA-MM-DD`; instantes são ISO 8601.
+Situações locais: `ABERTA`, `PAGA`, `SEM_VALOR`. Vencimento passado pode ser
+identificado comparando a data atual com `vencimento` de uma fatura aberta.
+
+Erros nas consultas: `400` para competência, filtros ou paginação inválidos;
+`404` para fatura ausente. As consultas não dependem da disponibilidade do banco.
+
+O agendamento diário às 00:00:05 de Brasília (`America/Sao_Paulo`) processa o mês anterior,
+recuperando dias sem execução e leituras recebidas depois do dia 1. Meses mais
+antigos não são recuperados por esse agendamento. As datas originais são preservadas.
+Instalações encerradas também podem ter consumo histórico faturado.
+O banco é consultado a cada 15 minutos para faturas abertas, inclusive tentativas
+de registro que falharam. Sem integração habilitada, a emissão local funciona.
+
+Configuração, exemplos e endpoints a implementar no banco:
+[INTEGRACAO_BANCARIA.md](INTEGRACAO_BANCARIA.md).
