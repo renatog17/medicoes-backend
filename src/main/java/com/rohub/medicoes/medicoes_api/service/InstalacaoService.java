@@ -57,6 +57,7 @@ public class InstalacaoService {
         }
         Instalacao entidade = new Instalacao(cliente, imovel, medidor, request.dataInicio());
         entidade.setObservacoes(request.observacoes());
+        entidade.setDiaEmissao(request.diaEmissao() == null ? 1 : request.diaEmissao());
         return ApiMapper.response(instalacoes.saveAndFlush(entidade));
     }
 

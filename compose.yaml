@@ -35,17 +35,21 @@ services:
       BANCO_URL: ${BANCO_URL:-http://localhost:9090}
       BANCO_TOKEN: ${BANCO_TOKEN:-}
       BANCO_TIMEOUT_MS: ${BANCO_TIMEOUT_MS:-5000}
-      BANCO_SINCRONIZACAO_MS: ${BANCO_SINCRONIZACAO_MS:-900000}
+      BANCO_SINCRONIZACAO_MS: ${BANCO_SINCRONIZACAO_MS:-1800000}
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - medicoes-dev
+      - integracao-banco
 
 networks:
   medicoes-dev:
     external: true
     name: medicoes-dev
+  integracao-banco:
+    external: true
+    name: rede-banco-mock
 
 volumes:
   postgres-data:

@@ -4,10 +4,8 @@ import java.math.BigDecimal;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Configuration
-@EnableScheduling
 @EnableConfigurationProperties({FaturamentoConfig.Propriedades.class, FaturamentoConfig.Banco.class})
 public class FaturamentoConfig {
     @ConfigurationProperties("app.faturamento")

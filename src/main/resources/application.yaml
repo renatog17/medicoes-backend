@@ -7,7 +7,7 @@ app:
     url: ${BANCO_URL:http://localhost:9090}
     token: ${BANCO_TOKEN:}
     timeout-ms: ${BANCO_TIMEOUT_MS:5000}
-    sincronizacao-ms: ${BANCO_SINCRONIZACAO_MS:900000}
+    sincronizacao-ms: ${BANCO_SINCRONIZACAO_MS:1800000}
 
 spring:
   application:

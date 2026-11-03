@@ -73,13 +73,20 @@ class FaturaBancoServiceTest {
     @Test void registraDadosDaFaturaEDoPagador() {
         when(banco.buscarPorReferencia("fatura-1")).thenReturn(Optional.empty());
         when(banco.registrar(any())).thenReturn(cobranca("fatura-1", "PENDENTE"));
-        var resposta = service.sincronizar(1L);
+        var resposta = service.registrar(1L);
         verify(banco).registrar(new BancoGateway.Registro("fatura-1", fatura.getTotal(), "BRL",
-                LocalDate.of(2026, 11, 10), new BancoGateway.Pagador("Ana Silva", "12345678909")));
+                LocalDate.of(2026, 11, 11), new BancoGateway.Pagador("Ana Silva", "12345678909")));
         assertEquals("cob-1", resposta.bancoId());
         assertEquals("pix", resposta.pix());
         assertEquals(2L, resposta.clienteId());
         assertEquals(Fatura.Situacao.ABERTA, resposta.situacao());
+    }
+    @Test void sincronizacaoSemIdentificacaoBancariaNaoEnviaCobranca() {
+        var resposta = service.sincronizar(1L);
+        assertNull(resposta.bancoId());
+        assertEquals(Fatura.Situacao.ABERTA, resposta.situacao());
+        verifyNoInteractions(banco);
+        verify(faturas, never()).saveAndFlush(any());
     }
     @Test void cancelamentoEExpiracaoNaoQuitamNemRecriamCobranca() {
         for (String situacao : new String[] {"CANCELADA", "EXPIRADA"}) {

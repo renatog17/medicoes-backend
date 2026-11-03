@@ -2,7 +2,7 @@
   "info": {
     "name": "Banco - Cobranças Pix (simulação)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Coleção para importação no Bruno como Postman Collection v2.1. Execute as requisições individualmente. Configure baseUrl, bancoToken e operadorToken nas variáveis da coleção. Registre uma cobrança e copie o id retornado para cobrancaId. Use uma cobrança diferente para cada simulação de pagamento, cancelamento e expiração. As simulações exigem o perfil Spring simulacao e token operador do mesmo credor. Não movimenta dinheiro real."
+    "description": "Coleção para importação no Bruno como Postman Collection v2.1. Execute as requisições individualmente. Configure baseUrl, bancoToken e operadorToken nas variáveis da coleção. Registre uma cobrança e copie o id retornado para cobrancaId. Use uma cobrança diferente para cada simulação de pagamento, cancelamento e expiração. As simulações exigem o perfil Spring simulacao e token operador do mesmo credor. Não movimenta dinheiro real. Na Medicoes API, a emissao atual e somente local e nao registra novas cobrancas automaticamente. A sincronizacao consulta apenas faturas ja vinculadas a uma cobranca por bancoId. Registrar uma cobranca nesta colecao testa o banco separadamente e nao cria esse vinculo na Medicoes API."
   },
   "auth": {
     "type": "bearer",

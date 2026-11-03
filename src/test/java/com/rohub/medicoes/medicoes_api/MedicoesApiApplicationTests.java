@@ -69,7 +69,7 @@ class MedicoesApiApplicationTests {
         var cliente = clientes.criar(new ClienteRequest("Ana", cin(), null, null, endereco));
         var imovel = imoveis.criar(new ImovelRequest(endereco));
         assertThrows(RecursoNaoEncontradoException.class, () -> instalacoes.criar(
-            new InstalacaoRequest(cliente.id(), imovel.id(), medidor.id(), Instant.now(), null)));
+            new InstalacaoRequest(cliente.id(), imovel.id(), medidor.id(), Instant.now(), null, null)));
     }
 
     @Test
@@ -89,7 +89,7 @@ class MedicoesApiApplicationTests {
         assertThrows(RecursoNaoEncontradoException.class, () -> imoveis.excluir(imovel.id()));
         var cliente = clientes.criar(new ClienteRequest("Ana", cin(), null, null, endereco));
         assertThrows(RecursoNaoEncontradoException.class, () -> instalacoes.criar(
-            new InstalacaoRequest(cliente.id(), imovel.id(), 1L, Instant.now(), null)));
+            new InstalacaoRequest(cliente.id(), imovel.id(), 1L, Instant.now(), null, null)));
 
         var entidadeExcluida = imovelRepository.findById(imovel.id()).orElseThrow();
         var compartilhado = salvarCliente("Compartilhado", entidadeExcluida.getEndereco());
@@ -142,7 +142,7 @@ class MedicoesApiApplicationTests {
         assertThrows(RecursoNaoEncontradoException.class, () -> clientes.atualizar(cliente.id(), request));
         assertThrows(RecursoNaoEncontradoException.class, () -> clientes.excluir(cliente.id()));
         assertThrows(RecursoNaoEncontradoException.class, () -> instalacoes.criar(
-            new InstalacaoRequest(cliente.id(), 1L, 1L, Instant.now(), null)));
+            new InstalacaoRequest(cliente.id(), 1L, 1L, Instant.now(), null, null)));
         assertThrows(org.springframework.dao.DataIntegrityViolationException.class, () -> clientes.criar(request));
 
     }
@@ -199,11 +199,11 @@ class MedicoesApiApplicationTests {
         var imovel = imoveis.criar(new ImovelRequest(endereco));
         var medidor = medidores.criar(new MedidorRequest("M-INTEGRACAO", null, null));
         var inicio = Instant.parse("2026-01-01T00:00:00Z");
-        var aberta = instalacoes.criar(new InstalacaoRequest(cliente.id(), imovel.id(), medidor.id(), inicio, null));
+        var aberta = instalacoes.criar(new InstalacaoRequest(cliente.id(), imovel.id(), medidor.id(), inicio, null, null));
         assertTrue(aberta.ativa());
         assertThrows(ConflitoException.class, () -> medidores.excluir(medidor.id()));
         assertThrows(ConflitoException.class, () -> instalacoes.criar(
-            new InstalacaoRequest(cliente.id(), imovel.id(), medidor.id(), inicio, null)));
+            new InstalacaoRequest(cliente.id(), imovel.id(), medidor.id(), inicio, null, null)));
         assertThrows(ConflitoException.class, () -> clientes.excluir(cliente.id()));
         assertEquals(1, instalacoes.listar(0, 20, cliente.id(), imovel.id(), medidor.id(), true).totalElements());
         assertThrows(ConflitoException.class, () -> imoveis.excluir(imovel.id()));
@@ -212,7 +212,7 @@ class MedicoesApiApplicationTests {
         assertThrows(ConflitoException.class, () -> imoveis.excluir(imovel.id()));
         assertThrows(ConflitoException.class, () -> clientes.excluir(cliente.id()));
         assertThrows(ConflitoException.class, () -> medidores.excluir(medidor.id()));
-        assertTrue(instalacoes.criar(new InstalacaoRequest(cliente.id(), imovel.id(), medidor.id(), fim, null)).ativa());
+        assertTrue(instalacoes.criar(new InstalacaoRequest(cliente.id(), imovel.id(), medidor.id(), fim, null, null)).ativa());
     }
 
     @Test
@@ -251,10 +251,11 @@ class MedicoesApiApplicationTests {
         var janeiro = Instant.parse("2026-01-15T12:00:00Z");
         medicoes.criar(new MedicaoRequest(primeira.getId(), janeiro, java.math.BigDecimal.TEN));
         medicoes.criar(new MedicaoRequest(segunda.getId(), janeiro, java.math.BigDecimal.TEN));
+        medicoes.criar(new MedicaoRequest(primeira.getId(), Instant.parse("2026-01-20T12:00:00Z"), java.math.BigDecimal.TEN));
         assertThrows(ConflitoException.class, () -> medicoes.criar(new MedicaoRequest(
                 primeira.getId(), Instant.parse("2026-02-01T02:59:59Z"), java.math.BigDecimal.TEN)));
         medicoes.criar(new MedicaoRequest(primeira.getId(), Instant.parse("2026-02-01T03:00:00Z"), java.math.BigDecimal.TEN));
-        assertEquals(2, medicoes.listar(0, 20, primeira.getId()).totalElements());
+        assertEquals(3, medicoes.listar(0, 20, primeira.getId()).totalElements());
         assertEquals(1, medicoes.listar(0, 20, segunda.getId()).totalElements());
     }
 

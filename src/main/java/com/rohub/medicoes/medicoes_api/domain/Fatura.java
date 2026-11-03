@@ -89,8 +89,8 @@ public class Fatura {
 
         this.tarifa = tarifa;
         this.total = consumo.multiply(tarifa).setScale(2, RoundingMode.HALF_UP);
-        this.emissao = competencia.plusMonths(1).atDay(1);
-        this.vencimento = competencia.plusMonths(1).atDay(10);
+        this.emissao = LocalDate.now(clock);
+        this.vencimento = emissao.plusDays(10);
         this.criadaEm = clock.instant();
         this.situacao = total.signum() == 0
                 ? Situacao.SEM_VALOR

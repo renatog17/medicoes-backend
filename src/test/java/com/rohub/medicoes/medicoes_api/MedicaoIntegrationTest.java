@@ -4,7 +4,7 @@ import com.rohub.medicoes.medicoes_api.config.FaturamentoConfig.Propriedades;
 import com.rohub.medicoes.medicoes_api.dto.MedicaoRequest;
 import com.rohub.medicoes.medicoes_api.exception.ConflitoException;
 import com.rohub.medicoes.medicoes_api.repository.*;
-import com.rohub.medicoes.medicoes_api.service.FaturaEmissaoService;
+import com.rohub.medicoes.medicoes_api.scheduler.FaturamentoService;
 import com.rohub.medicoes.medicoes_api.service.MedicaoService;
 import java.math.BigDecimal;
 import java.time.*;
@@ -15,7 +15,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.*;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.junit.jupiter.*;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,12 +45,10 @@ class MedicaoIntegrationTest {
         var referencia = medicoes.criar(new MedicaoRequest(instalacao,
                 Instant.parse("2026-10-01T03:00:00Z"), new BigDecimal("100")));
         var clock = Clock.fixed(Instant.parse("2026-11-01T03:00:00Z"), ZoneId.of("America/Sao_Paulo"));
-        var emissao = new FaturaEmissaoService(faturas, instalacoes, medicaoRepository,
-                new Propriedades(true, new BigDecimal("3.25")), clock);
-        var transactions = new TransactionTemplate(manager);
-        assertEquals("REFERENCIA_INICIAL", transactions.execute(
-                status -> emissao.emitir(instalacao, YearMonth.of(2026, 10))).resultado());
-        assertTrue(faturas.findByInstalacaoIdAndCompetencia(instalacao, "2026-10").isEmpty());
+        var emissao = new FaturamentoService(instalacoes, medicaoRepository, faturas,
+                new Propriedades(true, new BigDecimal("3.25")), clock, manager);
+        emissao.emitirAutomaticamente();
+        assertTrue(faturas.findAllByInstalacao_IdAndCompetencia(instalacao, "2026-10").isEmpty());
 
         var prontas = new CountDownLatch(2);
         var iniciar = new CountDownLatch(1);
@@ -69,9 +66,8 @@ class MedicaoIntegrationTest {
         var erro = assertThrows(ConflitoException.class, () -> medicoes.criar(new MedicaoRequest(instalacao,
                 Instant.parse("2026-10-18T12:00:00Z"), new BigDecimal("115"))));
         assertEquals("Ja existe uma medicao para esta instalacao neste mes", erro.getMessage());
-        assertEquals("EMITIDA", transactions.execute(
-                status -> emissao.emitir(instalacao, YearMonth.of(2026, 10))).resultado());
-        var fatura = faturas.findByInstalacaoIdAndCompetencia(instalacao, "2026-10").orElseThrow();
+        emissao.emitirAutomaticamente();
+        var fatura = faturas.findAllByInstalacao_IdAndCompetencia(instalacao, "2026-10").getFirst();
         assertEquals(referencia.id(), fatura.getMedicaoAnteriorId());
         assertEquals(new BigDecimal("15.000000"), fatura.getConsumo());
         assertEquals(new BigDecimal("48.75"), fatura.getTotal());

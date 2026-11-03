@@ -17,6 +17,7 @@ public interface FaturaRepository extends JpaRepository<Fatura, Long>, JpaSpecif
     Page<Fatura> findAll(Specification<Fatura> specification, Pageable pageable);
 
     @EntityGraph(attributePaths = {"instalacao", "instalacao.cliente"})
-    Optional<Fatura> findByInstalacaoIdAndCompetencia(Long instalacaoId, String competencia);
+    List<Fatura> findAllByInstalacao_IdAndCompetencia(Long instalacaoId, String competencia);
+    boolean existsByMedicaoAtualId(Long medicaoAtualId);
     List<Fatura> findBySituacao(Fatura.Situacao situacao);
 }

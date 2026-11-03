@@ -49,7 +49,7 @@ Resposta `201 Created` para criação, `200 OK` para repetição idempotente:
 - Preservar a referência durante toda a vida da cobrança, inclusive após pagamento.
 - Uma fatura tem somente uma cobrança; não recriar cobrança expirada ou cancelada
   automaticamente. O débito permanece aberto para tratamento operacional futuro.
-- Para emissões atrasadas, a data de vencimento original permanece dia 10.
+- O vencimento é calculado como a data real de emissão mais 10 dias.
   O banco deve aceitar o registro com vencimento passado e permitir o pagamento
   sem juros/multa nesta versão; a expiração técnica do Pix é independente dessa data.
 
@@ -95,9 +95,14 @@ Usar `400` para entrada inválida, `401/403` para credencial inválida/sem permi
 com `title`, `status` e `detail`, sem credenciais ou dados sensíveis.
 
 O cliente usa timeout configurável (padrão 5 segundos), sem repetição imediata de
-POST. Falhas mantêm a fatura local em aberto. Na próxima tentativa, consulta a
-referência e reutiliza a mesma chave no POST. A sincronização automática ocorre
-a cada 15 minutos, sob controle interno da API. Não há endpoints manuais de
+POST. Falhas mantêm a fatura local em aberto, sem recuperação automática do envio.
+O registro consulta a referência e reutiliza a mesma chave no POST para evitar
+duplicação. Atualmente a emissão é somente local e não chama o registro bancário.
+Ela ocorre no dia escolhido por instalação, com verificação diária às 00h00min05s
+de Brasília. O contrato de registro permanece documentado para uso futuro.
+A sincronização automática consulta apenas cobranças com identificação bancária,
+sem criar novas cobranças, a cada 30 minutos após o término da execução anterior
+por padrão, sob controle interno da API. Não há endpoints manuais de
 emissão, registro ou sincronização na Medições API, nem webhook nesta versão.
 
 ## Configurar a Medições API
@@ -109,7 +114,7 @@ BANCO_HABILITADO=true
 BANCO_URL=https://banco.exemplo
 BANCO_TOKEN=definir-em-segredo-do-ambiente
 BANCO_TIMEOUT_MS=5000
-BANCO_SINCRONIZACAO_MS=900000
+BANCO_SINCRONIZACAO_MS=1800000
 ```
 
 A tarifa acima é apenas exemplo. Faturamento e banco vêm desabilitados.
@@ -127,23 +132,19 @@ pela IDE ou Maven, forneça essas variáveis no ambiente do processo: o arquivo
 
 1. Importe as duas coleções em `bruno/`. A coleção Medições usa
    `http://localhost:8080/api`; a coleção Banco usa `http://localhost:9090`.
-2. Cadastre cliente, imóvel, medidor e instalação na Medições API. Registre uma
-   leitura inicial e outra leitura no mês anterior ao atual, em ordem cronológica,
-   com consumo positivo e datas dentro da vigência da instalação.
-3. Aguarde a emissão diária às `00:00:05` de Brasília (`America/Sao_Paulo`) ou, se a fatura já
-   existir, a sincronização periódica. Consulte as faturas para obter `id`,
-   `bancoId`, `pix` e `situacaoBancaria`. A emissão usa o mês anterior ao atual.
-4. Na coleção Banco, informe `referenciaExterna=fatura-{id}` e consulte por
-   referência. Copie o ID da cobrança para `cobrancaId`. Não registre outra
-   cobrança manualmente para essa fatura.
-5. Com o banco no perfil `simulacao`, configure `operadorToken` do mesmo credor
-   e execute **Simular pagamento integral**. Esse token é usado somente no Bruno.
-6. Aguarde a sincronização (padrão: 15 minutos) e consulte a fatura na Medições
-   API: deve retornar `PAGA`, valor integral e instante do pagamento.
-7. Use faturas distintas para simular cancelamento e expiração. Após sincronizar,
-   elas permanecem `ABERTA`, com a situação bancária correspondente e o mesmo ID.
+2. Cadastre cliente, imóvel, medidor e instalação, escolhendo `diaEmissao`.
+   Registre as leituras em ordem cronológica e dentro da vigência da instalação.
+3. Aguarde o dia escolhido e a execução às 00h00min05s de Brasília. Consulte
+   as faturas: a emissão local não preenche `bancoId` nem `pix`.
+4. Para validar sincronização, use uma fatura já vinculada a uma cobrança
+   bancária. No banco com perfil `simulacao`, configure `operadorToken` do
+   mesmo credor e simule o pagamento integral dessa cobrança.
+5. Aguarde a sincronização e consulte a fatura: deve retornar `PAGA`, valor
+   integral e instante do pagamento. Cancelamento e expiração mantêm a fatura
+   `ABERTA`, com a situação bancária correspondente.
 
-Para encurtar a espera pela sincronização em desenvolvimento, configure
-`BANCO_SINCRONIZACAO_MS=5000` antes de iniciar a Medições API. A emissão continua
-no horário diário; não há endpoint manual. Falhas de conexão preservam a fatura
-para nova tentativa automática. Para diagnóstico, consulte os logs de ambas as APIs.
+Faturas novas sem identificação bancária não entram nessa sincronização.
+O registro automático de novas cobranças e endpoints manuais não fazem parte
+do fluxo atual. Para reduzir o intervalo da consulta em desenvolvimento,
+configure `BANCO_SINCRONIZACAO_MS=5000` antes de iniciar a API.
+Valores explícitos no ambiente prevalecem sobre o padrão de 30 minutos.

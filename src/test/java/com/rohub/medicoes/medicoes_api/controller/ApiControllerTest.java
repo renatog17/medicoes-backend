@@ -14,6 +14,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class ApiControllerTest {
     @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = {0, 32})
+    void rejeitaDiaDeEmissaoForaDoIntervalo(int dia) throws Exception {
+        var instalacoes = mock(InstalacaoService.class);
+        var instalacaoMvc = MockMvcBuilders.standaloneSetup(new InstalacaoController(instalacoes))
+                .setControllerAdvice(new ApiExceptionHandler()).build();
+        instalacaoMvc.perform(post("/api/instalacoes").contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"clienteId":1,"imovelId":2,"medidorId":3,
+                         "dataInicio":"2026-01-01T00:00:00Z","diaEmissao":%d}
+                        """.formatted(dia)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("diaEmissao"));
+        verifyNoInteractions(instalacoes);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(strings = {
         "", ",\"cin\":null", ",\"cin\":\"\"", ",\"cin\":\"529.982.247-25\"",
         ",\"cin\":\"52998224724\""

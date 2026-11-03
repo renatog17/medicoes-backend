@@ -19,12 +19,24 @@ class InstalacaoServiceTest {
     private final InstalacaoService service = new InstalacaoService(instalacoes, clientes, imoveis, medidores, medicoes);
     private final Instant inicio = Instant.parse("2026-01-01T00:00:00Z");
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullSource
+    @org.junit.jupiter.params.provider.ValueSource(ints = {1, 20, 31})
+    void cadastraDiaDeEmissaoComPadraoUm(Integer dia) {
+        when(clientes.findByIdAndExcluidoFalse(1L)).thenReturn(Optional.of(new Cliente()));
+        when(imoveis.findByIdAndExcluidoFalse(2L)).thenReturn(Optional.of(new Imovel()));
+        when(medidores.findByIdAndExcluidoFalse(3L)).thenReturn(Optional.of(new Medidor()));
+        when(instalacoes.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+        var resposta = service.criar(new InstalacaoRequest(1L, 2L, 3L, inicio, null, dia));
+        assertEquals(dia == null ? 1 : dia.intValue(), resposta.diaEmissao());
+    }
+
     @Test
     void rejeitaMedidorExcluido() {
         when(clientes.findByIdAndExcluidoFalse(1L)).thenReturn(Optional.of(new Cliente()));
         when(imoveis.findByIdAndExcluidoFalse(2L)).thenReturn(Optional.of(new Imovel()));
         assertThrows(RecursoNaoEncontradoException.class,
-            () -> service.criar(new InstalacaoRequest(1L, 2L, 3L, inicio, null)));
+            () -> service.criar(new InstalacaoRequest(1L, 2L, 3L, inicio, null, null)));
         verify(medidores).findByIdAndExcluidoFalse(3L);
         verify(instalacoes, never()).saveAndFlush(any());
     }
@@ -33,7 +45,7 @@ class InstalacaoServiceTest {
     void rejeitaImovelExcluido() {
         when(clientes.findByIdAndExcluidoFalse(1L)).thenReturn(Optional.of(new Cliente()));
         assertThrows(RecursoNaoEncontradoException.class,
-            () -> service.criar(new InstalacaoRequest(1L, 2L, 3L, inicio, null)));
+            () -> service.criar(new InstalacaoRequest(1L, 2L, 3L, inicio, null, null)));
         verify(imoveis).findByIdAndExcluidoFalse(2L);
         verify(instalacoes, never()).saveAndFlush(any());
     }
@@ -41,7 +53,7 @@ class InstalacaoServiceTest {
     @Test
     void rejeitaReferenciaInexistente() {
         assertThrows(RecursoNaoEncontradoException.class,
-            () -> service.criar(new InstalacaoRequest(1L, 2L, 3L, inicio, null)));
+            () -> service.criar(new InstalacaoRequest(1L, 2L, 3L, inicio, null, null)));
         verify(instalacoes, never()).saveAndFlush(any());
     }
     @Test
@@ -51,7 +63,7 @@ class InstalacaoServiceTest {
         when(medidores.findByIdAndExcluidoFalse(3L)).thenReturn(Optional.of(new Medidor()));
         when(instalacoes.existsByMedidorIdAndDataFimIsNull(3L)).thenReturn(true);
         assertThrows(ConflitoException.class,
-            () -> service.criar(new InstalacaoRequest(1L, 2L, 3L, inicio, null)));
+            () -> service.criar(new InstalacaoRequest(1L, 2L, 3L, inicio, null, null)));
         verify(instalacoes, never()).saveAndFlush(any());
     }
     @Test

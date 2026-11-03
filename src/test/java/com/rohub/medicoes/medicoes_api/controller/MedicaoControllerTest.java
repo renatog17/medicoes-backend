@@ -19,7 +19,7 @@ class MedicaoControllerTest {
     private final MedicaoService service = mock(MedicaoService.class);
     private final org.springframework.test.web.servlet.MockMvc mvc = MockMvcBuilders
             .standaloneSetup(new MedicaoController(service)).setControllerAdvice(new ApiExceptionHandler()).build();
-    private final MedicaoResponse resposta = new MedicaoResponse(7L, 1L, Instant.parse("2026-01-01T00:00:00Z"), BigDecimal.ZERO);
+    private final MedicaoResponse resposta = new MedicaoResponse(7L, 1L, Instant.parse("2026-01-01T00:00:00Z"), BigDecimal.ZERO, false);
 
     @Test
     void criaReferenciaEConsulta() throws Exception {
@@ -29,7 +29,8 @@ class MedicaoControllerTest {
                 .andExpect(status().isCreated()).andExpect(header().string("Location", "http://localhost/api/medicoes/7"))
                 .andExpect(jsonPath("$.leitura").value(0)).andExpect(jsonPath("$.instalacaoId").value(1));
         when(service.buscar(7L)).thenReturn(resposta);
-        mvc.perform(get("/api/medicoes/7")).andExpect(status().isOk()).andExpect(jsonPath("$.id").value(7));
+        mvc.perform(get("/api/medicoes/7")).andExpect(status().isOk()).andExpect(jsonPath("$.id").value(7))
+                .andExpect(jsonPath("$.falhaEmissaoFatura").value(false));
         when(service.buscar(99L)).thenThrow(new RecursoNaoEncontradoException("Medicao", 99L));
         mvc.perform(get("/api/medicoes/99")).andExpect(status().isNotFound());
     }

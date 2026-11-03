@@ -42,7 +42,7 @@ public class FaturaBancoService {
     public FaturaResponse sincronizar(Long id) {
         var fatura = buscar(id);
         if (fatura.getSituacao() != Fatura.Situacao.ABERTA) return FaturaResponse.from(fatura);
-        if (fatura.getBancoId() == null) return registrar(id);
+        if (fatura.getBancoId() == null) return FaturaResponse.from(fatura);
         return salvar(id, banco.consultar(fatura.getBancoId()));
     }
     private FaturaResponse salvar(Long id, BancoGateway.Cobranca resposta) {

@@ -1,33 +1,44 @@
 # Medicoes API
 
-## Faturamento mensal
+## Faturamento por instalação
 
 Configure `FATURAMENTO_HABILITADO=true` e `FATURAMENTO_VALOR_M3` com o preço
-real por metro cúbico. A emissão ocorre no dia 1 pelo consumo do mês anterior,
-com vencimento no dia 10. O processamento diário às 00:00:05 recupera falhas e
-leituras atrasadas do ciclo corrente. Emissão, registro Pix e sincronização são
-controlados internamente pela API, sem endpoints manuais.
-A primeira leitura é referência inicial. A tarifa fica preservada nas faturas.
+real por metro cúbico. No cadastro da instalação, informe `diaEmissao` entre
+1 e 31; se omitido, o padrão é 1. Em meses mais curtos, usa-se o último dia.
 
-O faturamento e a integração bancária vêm desabilitados. Os parâmetros estão
-em `.env.example` e são repassados pelo Compose. Alterações exigem reiniciar
+O scheduler executa diariamente às **00h00min05s de Brasília**
+(`America/Sao_Paulo`) e processa as instalações com emissão naquele dia.
+Cada medição pendente com uma leitura anterior gera sua própria fatura, inclusive
+medições antigas. A competência é o mês da medição; a emissão usa a data real
+e o vencimento ocorre 10 dias depois. A primeira leitura é apenas referência.
+A tarifa fica preservada nas faturas, e a mesma medição não é faturada duas vezes.
+
+Uma falha desfaz somente aquela emissão, marca `falhaEmissaoFatura=true` na
+medição e permite continuar nas próximas. Medições marcadas não são tentadas
+novamente. Não há recuperação de disparos perdidos se a aplicação estiver
+desligada no horário da execução.
+
+A emissão é local, sem envio de novas cobranças ao banco, logs ou resumo de lote.
+A sincronização bancária existente continua consultando faturas abertas que já
+tenham `bancoId`, sem registrar cobranças novas. O intervalo padrão é de
+30 minutos após o término da execução anterior, configurável por
+`BANCO_SINCRONIZACAO_MS=1800000` e condicionado a `BANCO_HABILITADO`.
+
+Faturamento e integração bancária vêm desabilitados. Os parâmetros estão em
+`.env.example` e são repassados pelo Compose. Alterações exigem reiniciar
 (no Compose, recriar) a API. `BANCO_URL` deve ser acessível de dentro do contêiner;
 `localhost` dentro dele aponta para o próprio contêiner.
 
-Consulte [API.md](API.md) para as rotas de faturas e
-[INTEGRACAO_BANCARIA.md](INTEGRACAO_BANCARIA.md) para o contrato Pix que o
-sistema bancário fornece. O documento inclui configuração local (banco em
-`9090`, Medições em `8080`) e roteiro de validação no Bruno. A coleção Bruno
-inclui a pasta Faturas. A API bancária da coleção fornece Pix simulado.
+Consulte [API.md](API.md) para os contratos de cadastro e consulta e
+[INTEGRACAO_BANCARIA.md](INTEGRACAO_BANCARIA.md) para o contrato bancário.
+A aplicação usa um bean `Clock` no fuso `America/Sao_Paulo`; testes fornecem
+`Clock.fixed(instant, zone)` para datas determinísticas.
 
-A aplicação usa a hora real de Brasília (`America/Sao_Paulo`), por meio de um
-bean `Clock`. Use `LocalDate.now(clock)` e `LocalDateTime.now(clock)` nos
-componentes que precisam da data/hora atual. Em testes, forneça um
-`Clock.fixed(instant, zone)` para obter resultados determinísticos.
-
-O faturamento é agendado diariamente às **00:00:05 de Brasília**, respeitando
-`FATURAMENTO_HABILITADO`. Não há recuperação de disparos perdidos enquanto a
-API esteve desligada. A sincronização bancária mantém seu intervalo configurado.
+Os agendamentos ficam no pacote `scheduler`, habilitados por
+`AgendamentoConfig`. `FaturamentoService` concentra a emissão e acessa os
+repositórios diretamente. A rotina de cache continua preenchendo
+`cache_leitura_anterior` diariamente à 01h00; o faturamento ainda consulta
+as leituras originais.
 
 ## Run with Docker Engine in Ubuntu WSL 2
 

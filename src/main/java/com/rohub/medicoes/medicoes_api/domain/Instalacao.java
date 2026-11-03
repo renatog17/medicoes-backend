@@ -2,6 +2,8 @@ package com.rohub.medicoes.medicoes_api.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 
@@ -40,6 +42,19 @@ public class Instalacao {
     @Size(max = 2000)
     @Column(name = "observacoes", length = 2000)
     private String observacoes;
+
+    @Min(1)
+    @Max(31)
+    @Column(name = "dia_emissao", nullable = false)
+    private int diaEmissao = 1;
+
+    public int getDiaEmissao() {
+        return diaEmissao;
+    }
+
+    public void setDiaEmissao(int diaEmissao) {
+        this.diaEmissao = diaEmissao;
+    }
 
     @Version
     @Column(nullable = false)

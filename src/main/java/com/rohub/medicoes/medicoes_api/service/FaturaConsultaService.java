@@ -19,7 +19,7 @@ public class FaturaConsultaService {
     }
     public PaginaResponse<FaturaResponse> listar(int page, int size, Long instalacaoId, String competencia, Fatura.Situacao situacao) {
         Specification<Fatura> filtro = (root, query, cb) -> cb.conjunction();
-        if (instalacaoId != null) filtro = filtro.and((r, q, cb) -> cb.equal(r.get("instalacaoId"), instalacaoId));
+        if (instalacaoId != null) filtro = filtro.and((r, q, cb) -> cb.equal(r.get("instalacao").get("id"), instalacaoId));
         if (competencia != null) filtro = filtro.and((r, q, cb) -> cb.equal(r.get("competencia"), competencia));
         if (situacao != null) filtro = filtro.and((r, q, cb) -> cb.equal(r.get("situacao"), situacao));
         return PaginaResponse.from(faturas.findAll(filtro, Paginacao.of(page, size)).map(FaturaResponse::from));

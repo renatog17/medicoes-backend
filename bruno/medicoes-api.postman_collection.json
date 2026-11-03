@@ -2,7 +2,7 @@
     "info":  {
                  "name":  "Medicoes API",
                  "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-                 "description":  "Colecao para importacao no Bruno. Execute as requisicoes individualmente. Crie cliente, imovel e medidor, copie os IDs para as variaveis e depois crie uma instalacao. Registre a medicao 0 (referencia inicial), depois as proximas medicoes e por fim encerre a instalacao. Copie o ID de cada medicao que deseja consultar para medicaoId. Clientes, imoveis e medidores usam exclusao logica. CIN e numero de serie permanecem reservados apos exclusao. Respostas de erro: 400 dados invalidos ou periodo invalido, 404 recurso inexistente ou cadastro excluido, 409 conflito. Instalacoes e medicoes preservam o historico; nao ha PUT ou DELETE para esses recursos."
+                 "description":  "Colecao para importacao no Bruno. Execute as requisicoes individualmente. Crie cliente, imovel e medidor, copie os IDs para as variaveis e depois crie uma instalacao. Registre a medicao 0 (referencia inicial), depois as proximas medicoes e por fim encerre a instalacao. Copie o ID de cada medicao que deseja consultar para medicaoId. Clientes, imoveis e medidores usam exclusao logica. CIN e numero de serie permanecem reservados apos exclusao. Respostas de erro: 400 dados invalidos ou periodo invalido, 404 recurso inexistente ou cadastro excluido, 409 conflito. Instalacoes e medicoes preservam o historico; nao ha PUT ou DELETE para esses recursos. Escolha diaEmissao no cadastro da instalacao. O faturamento verifica diariamente as instalacoes com emissao naquele dia. A emissao local nao registra novas cobrancas no banco; a sincronizacao consulta somente faturas que ja tenham bancoId."
              },
     "auth":  {
                  "type":  "noauth"
@@ -46,6 +46,11 @@
                      {
                          "key":  "competencia",
                          "value":  "2026-10",
+                         "type":  "string"
+                     },
+                     {
+                         "key":  "diaEmissao",
+                         "value":  "20",
                          "type":  "string"
                      }
                  ],
@@ -609,7 +614,7 @@
                                                                                 }
                                                                             ]
                                                               },
-                                                      "description":  "Retorna 200. Habilite os filtros opcionais clienteId, imovelId, medidorId e ativa conforme necessario. size: 1 a 100; page inicia em zero. O filtro ativa e o campo ativa da resposta ainda sao calculados por dataFim: true quando nula, false quando preenchida. O atributo ativo da entidade ainda nao integra o contrato da API."
+                                                      "description":  "Retorna 200. Habilite os filtros opcionais clienteId, imovelId, medidorId e ativa conforme necessario. size: 1 a 100; page inicia em zero. O filtro ativa e o campo ativa da resposta ainda sao calculados por dataFim: true quando nula, false quando preenchida. O atributo ativo da entidade ainda nao integra o contrato da API. A resposta de cada instalacao inclui diaEmissao, o dia mensal escolhido para emissao."
                                                   },
                                       "response":  [
 
@@ -638,10 +643,10 @@
                                                                                "instalacoes"
                                                                            ]
                                                               },
-                                                      "description":  "Retorna 201. Crie os tres cadastros antes e configure seus IDs; cliente, imovel e medidor devem existir e nao estar excluidos, caso contrario retorna 404. Copie o ID retornado para instalacaoId. Um medidor so pode ter uma instalacao aberta; conflito retorna 409. dataInicio obrigatoria em formato ISO-8601. Nao envie ativo: esse atributo ainda nao integra o contrato da API.",
+                                                      "description":  "Retorna 201. Crie os tres cadastros antes e configure seus IDs; cliente, imovel e medidor devem existir e nao estar excluidos, caso contrario retorna 404. Copie o ID retornado para instalacaoId. Um medidor so pode ter uma instalacao aberta; conflito retorna 409. dataInicio obrigatoria em formato ISO-8601. Nao envie ativo: esse atributo ainda nao integra o contrato da API. diaEmissao e opcional, aceita valores de 1 a 31 e usa 1 quando omitido ou nulo; valores fora do intervalo retornam 400. A variavel diaEmissao da colecao tem exemplo 20. Em meses sem o dia escolhido, a emissao ocorre no ultimo dia. A resposta inclui diaEmissao.",
                                                       "body":  {
                                                                    "mode":  "raw",
-                                                                   "raw":  "{\n  \"clienteId\": {{clienteId}},\n  \"imovelId\": {{imovelId}},\n  \"medidorId\": {{medidorId}},\n  \"dataInicio\": \"2026-10-17T12:00:00Z\",\n  \"observacoes\": \"Teste manual pelo Bruno\"\n}",
+                                                                   "raw":  "{\n  \"clienteId\": {{clienteId}},\n  \"imovelId\": {{imovelId}},\n  \"medidorId\": {{medidorId}},\n  \"dataInicio\": \"2026-10-17T12:00:00Z\",\n  \"diaEmissao\": {{diaEmissao}},\n  \"observacoes\": \"Teste manual pelo Bruno\"\n}",
                                                                    "options":  {
                                                                                    "raw":  {
                                                                                                "language":  "json"
@@ -673,7 +678,7 @@
                                                                                "{{instalacaoId}}"
                                                                            ]
                                                               },
-                                                      "description":  "Retorna 200 ou 404. A resposta inclui o historico da instalacao. O campo ativa ainda e calculado por dataFim, independentemente do atributo ativo persistido na entidade."
+                                                      "description":  "Retorna 200 ou 404. A resposta inclui o historico da instalacao. O campo ativa ainda e calculado por dataFim, independentemente do atributo ativo persistido na entidade. A resposta inclui diaEmissao, o dia mensal escolhido para emissao."
                                                   },
                                       "response":  [
 
@@ -704,7 +709,7 @@
                                                                                "encerramento"
                                                                            ]
                                                               },
-                                                      "description":  "Retorna 200 e preserva o historico. dataFim obrigatoria em formato ISO-8601 e posterior a dataInicio, sem anteceder a ultima medicao; periodo invalido retorna 400. Instalacao ja encerrada retorna 409. O encerramento preenche dataFim e a resposta passa a ter ativa=false; o atributo ativo da entidade ainda nao e atualizado por esta operacao. Nao ha PUT ou DELETE de instalacoes.",
+                                                      "description":  "Retorna 200 e preserva o historico. dataFim obrigatoria em formato ISO-8601 e posterior a dataInicio, sem anteceder a ultima medicao; periodo invalido retorna 400. Instalacao ja encerrada retorna 409. O encerramento preenche dataFim e a resposta passa a ter ativa=false; o atributo ativo da entidade ainda nao e atualizado por esta operacao. Nao ha PUT ou DELETE de instalacoes. A resposta inclui diaEmissao, o dia mensal escolhido para emissao.",
                                                       "body":  {
                                                                    "mode":  "raw",
                                                                    "raw":  "{\n  \"dataFim\": \"2026-10-17T13:00:00Z\"\n}",
@@ -758,7 +763,7 @@
                                                                                 }
                                                                             ]
                                                               },
-                                                      "description":  "Retorna 200 com content, page, size, totalElements e totalPages. Ordenacao por ID crescente. page inicia em zero; size de 1 a 100. Habilite o filtro opcional instalacaoId para consultar somente as medicoes de uma instalacao."
+                                                      "description":  "Retorna 200 com content, page, size, totalElements e totalPages. Ordenacao por ID crescente. page inicia em zero; size de 1 a 100. Habilite o filtro opcional instalacaoId para consultar somente as medicoes de uma instalacao. falhaEmissaoFatura e somente de leitura: inicia false e indica que a tentativa de emitir a fatura daquela medicao falhou quando true. Medicoes marcadas nao sao tentadas novamente automaticamente. Nao envie esse campo no cadastro."
                                                   },
                                       "response":  [
 
@@ -787,7 +792,7 @@
                                                                                "medicoes"
                                                                            ]
                                                               },
-                                                      "description":  "Retorna 201 com Location. Configure instalacaoId com uma instalacao existente e sem medicoes. A medicao 0 e a primeira leitura da instalacao; nao significa ID zero nem leitura obrigatoriamente zero. Leitura obrigatoria e nao negativa, com ate 13 digitos inteiros e 6 decimais. dataMedicao obrigatoria em ISO-8601 e dentro do periodo da instalacao, inclusive os limites. O exemplo coincide com dataInicio da instalacao da colecao. Copie o id retornado para medicaoId. A resposta contem id, instalacaoId, dataMedicao e leitura, sem consumo ou numeracao especial. Instalacao inexistente retorna 404; dados ou periodo invalidos retornam 400. Nao ha PUT ou DELETE de medicoes.",
+                                                      "description":  "Retorna 201 com Location. Configure instalacaoId com uma instalacao existente e sem medicoes. A medicao 0 e a primeira leitura da instalacao; nao significa ID zero nem leitura obrigatoriamente zero. Leitura obrigatoria e nao negativa, com ate 13 digitos inteiros e 6 decimais. dataMedicao obrigatoria em ISO-8601 e dentro do periodo da instalacao, inclusive os limites. O exemplo coincide com dataInicio da instalacao da colecao. Copie o id retornado para medicaoId. A resposta contem id, instalacaoId, dataMedicao, leitura e falhaEmissaoFatura, sem consumo ou numeracao especial. Instalacao inexistente retorna 404; dados ou periodo invalidos retornam 400. Nao ha PUT ou DELETE de medicoes. falhaEmissaoFatura e somente de leitura: inicia false e indica que a tentativa de emitir a fatura daquela medicao falhou quando true. Medicoes marcadas nao sao tentadas novamente automaticamente. Nao envie esse campo no cadastro.",
                                                       "body":  {
                                                                    "mode":  "raw",
                                                                    "raw":  "{\n  \"instalacaoId\": {{instalacaoId}},\n  \"dataMedicao\": \"2026-10-17T12:00:00Z\",\n  \"leitura\": 100\n}",
@@ -825,7 +830,7 @@
                                                                                "medicoes"
                                                                            ]
                                                               },
-                                                      "description":  "Execute apos a referencia inicial. Retorna 201 com Location. dataMedicao deve ser estritamente posterior a ultima medicao e estar dentro do periodo da instalacao; leitura deve ser maior ou igual a anterior, nao negativa, com ate 13 digitos inteiros e 6 decimais. Nao aceita insercao retroativa. No mes da medicao 0, sao permitidas duas medicoes no total: a referencia inicial e uma mensal. A terceira retorna 409. Nos demais meses, uma segunda medicao retorna 409. Mes e ano seguem o fuso de Brasilia (America/Sao_Paulo). O exemplo ocorre no mesmo mes da referencia inicial e antes do encerramento da colecao, as 13:00Z. Repetir a mesma data ou reduzir a leitura retorna 409. Dados ou periodo invalidos retornam 400; instalacao inexistente retorna 404. Copie o id retornado para medicaoId para consultar esta medicao. Instalacoes encerradas aceitam registros dentro do periodo, respeitando a sequencia.",
+                                                      "description":  "Execute apos a referencia inicial. Retorna 201 com Location. dataMedicao deve ser estritamente posterior a ultima medicao e estar dentro do periodo da instalacao; leitura deve ser maior ou igual a anterior, nao negativa, com ate 13 digitos inteiros e 6 decimais. Nao aceita insercao retroativa. No mes da medicao 0, sao permitidas duas medicoes no total: a referencia inicial e uma mensal. A terceira retorna 409. Nos demais meses, uma segunda medicao retorna 409. Mes e ano seguem o fuso de Brasilia (America/Sao_Paulo). O exemplo ocorre no mesmo mes da referencia inicial e antes do encerramento da colecao, as 13:00Z. Repetir a mesma data ou reduzir a leitura retorna 409. Dados ou periodo invalidos retornam 400; instalacao inexistente retorna 404. Copie o id retornado para medicaoId para consultar esta medicao. Instalacoes encerradas aceitam registros dentro do periodo, respeitando a sequencia. falhaEmissaoFatura e somente de leitura: inicia false e indica que a tentativa de emitir a fatura daquela medicao falhou quando true. Medicoes marcadas nao sao tentadas novamente automaticamente. Nao envie esse campo no cadastro.",
                                                       "body":  {
                                                                    "mode":  "raw",
                                                                    "raw":  "{\n  \"instalacaoId\": {{instalacaoId}},\n  \"dataMedicao\": \"2026-10-17T12:30:00Z\",\n  \"leitura\": 110\n}",
@@ -860,7 +865,7 @@
                                                                                "{{medicaoId}}"
                                                                            ]
                                                               },
-                                                      "description":  "Preencha medicaoId com o ID retornado ao cadastrar uma medicao. Retorna 200 com id, instalacaoId, dataMedicao e leitura; medicao inexistente retorna 404. A referencia inicial tambem possui ID gerado pelo banco, diferente de zero."
+                                                      "description":  "Preencha medicaoId com o ID retornado ao cadastrar uma medicao. Retorna 200 com id, instalacaoId, dataMedicao, leitura e falhaEmissaoFatura; medicao inexistente retorna 404. A referencia inicial tambem possui ID gerado pelo banco, diferente de zero. falhaEmissaoFatura e somente de leitura: inicia false e indica que a tentativa de emitir a fatura daquela medicao falhou quando true. Medicoes marcadas nao sao tentadas novamente automaticamente. Nao envie esse campo no cadastro."
                                                   },
                                       "response":  [
 
@@ -878,7 +883,8 @@
                                                       "header":  [
 
                                                                  ],
-                                                      "url":  "{{baseUrl}}/faturas?page=0\u0026size=20\u0026competencia={{competencia}}"
+                                                      "url":  "{{baseUrl}}/faturas?page=0\u0026size=20\u0026competencia={{competencia}}",
+                                                      "description":  "Retorna 200 com pagina de faturas. competencia usa AAAA-MM e corresponde ao mes da medicao, mesmo quando a emissao ocorre depois. Pode haver varias faturas da mesma instalacao na mesma competencia, uma por medicao. O scheduler executa diariamente as 00h00min05s de Brasilia (America/Sao_Paulo), respeitando diaEmissao de cada instalacao e ajustando ao ultimo dia de meses curtos. Processa todas as medicoes pendentes ate a execucao que tenham leitura anterior, inclusive historicas; ignora medicoes com falhaEmissaoFatura=true. A primeira leitura nao gera fatura. Uma falha e marcada na medicao, sem nova tentativa automatica. Nao ha recuperacao de disparos perdidos enquanto a API estiver desligada. A emissao local nao registra novas cobrancas no banco; a sincronizacao consulta somente faturas que ja tenham bancoId."
                                                   },
                                       "response":  [
 
@@ -891,7 +897,8 @@
                                                       "header":  [
 
                                                                  ],
-                                                      "url":  "{{baseUrl}}/faturas/{{faturaId}}"
+                                                      "url":  "{{baseUrl}}/faturas/{{faturaId}}",
+                                                      "description":  "Preencha faturaId com o ID retornado na listagem. Retorna 200 ou 404. competencia e o mes da medicao; emissao e a data real de criacao e vencimento ocorre 10 dias depois. A tarifa historica e preservada. Cada medicao pode gerar somente uma fatura. A emissao local nao registra novas cobrancas no banco; a sincronizacao consulta somente faturas que ja tenham bancoId."
                                                   },
                                       "response":  [
 

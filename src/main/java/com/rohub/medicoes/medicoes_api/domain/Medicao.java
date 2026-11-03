@@ -27,6 +27,13 @@ public class Medicao {
     @Column(name = "leitura", nullable = false, precision = 19, scale = 6)
     private BigDecimal leitura;
 
+    @Column(name = "falha_emissao_fatura", nullable = false)
+    private boolean falhaEmissaoFatura;
+
+    public boolean isFalhaEmissaoFatura() {
+        return falhaEmissaoFatura;
+    }
+
     public Medicao() {
     }
 

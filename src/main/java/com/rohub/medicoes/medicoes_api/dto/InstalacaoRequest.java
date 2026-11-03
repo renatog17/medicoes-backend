@@ -9,5 +9,6 @@ public record InstalacaoRequest(
         @NotNull @Positive Long imovelId,
         @NotNull @Positive Long medidorId,
         @NotNull Instant dataInicio,
-        @Size(max = 2000) String observacoes) {
+        @Size(max = 2000) String observacoes,
+        @Min(1) @Max(31) Integer diaEmissao) {
 }

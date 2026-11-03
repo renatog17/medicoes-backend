@@ -61,9 +61,14 @@ Criação:
   "imovelId": 1,
   "medidorId": 1,
   "dataInicio": "2026-10-14T12:00:00Z",
-  "observacoes": null
+  "observacoes": null,
+  "diaEmissao": 20
 }
 ```
+
+`diaEmissao` aceita valores de 1 a 31, com padrão 1 quando ausente ou nulo.
+O campo também é retornado nas consultas. Para meses sem o dia escolhido,
+a emissão ocorre no último dia do mês.
 
 Encerramento recebe `{"dataFim":"2026-10-15T12:00:00Z"}`, posterior ao início.
 Para trocar titular ou medidor, encerre a instalação atual e crie outra.
@@ -111,13 +116,15 @@ O cadastro retorna **201 Created**, com `Location: /api/medicoes/{id}`
   "id": 10,
   "instalacaoId": 1,
   "dataMedicao": "2026-10-14T12:00:00Z",
-  "leitura": 100
+  "leitura": 100,
+  "falhaEmissaoFatura": false
 }
 ```
 
-O ID é gerado pelo banco. Não envie `id` no cadastro. A resposta contém somente
-`id`, `instalacaoId`, `dataMedicao` e `leitura`; não há consumo calculado nem
-campo de numeração da medição.
+O ID é gerado pelo banco. Não envie `id` no cadastro. A resposta contém
+`id`, `instalacaoId`, `dataMedicao`, `leitura` e `falhaEmissaoFatura`.
+O indicador de falha é somente para leitura; quando verdadeiro, a medição não
+será tentada novamente pelo faturamento. Não há consumo calculado na resposta.
 
 ### Histórico e paginação
 
@@ -130,13 +137,15 @@ campo de numeração da medição.
       "id": 10,
       "instalacaoId": 1,
       "dataMedicao": "2026-10-14T12:00:00Z",
-      "leitura": 100
+      "leitura": 100,
+      "falhaEmissaoFatura": false
     },
     {
       "id": 11,
       "instalacaoId": 1,
       "dataMedicao": "2026-11-14T12:30:00Z",
-      "leitura": 110
+      "leitura": 110,
+      "falhaEmissaoFatura": false
     }
   ],
   "page": 0,
@@ -226,18 +235,19 @@ No encerramento, `dataFim` anterior à última medição retorna 400.
 
 O faturamento usa a leitura acumulada em m³. O consumo é a diferença entre a
 leitura da competência e a leitura anterior disponível da instalação. A primeira
-leitura não gera cobrança. A competência `2026-10` tem emissão em `2026-11-01`
-e vencimento em `2026-11-10`. Valores são em BRL, arredondados com HALF_UP.
+leitura não gera cobrança. Cada medição pendente gera uma fatura com competência
+igual ao mês da medição. A emissão usa a data real e o vencimento ocorre 10 dias
+depois. Pode haver várias faturas da mesma instalação na mesma competência;
+a unicidade é por medição atual. Valores são em BRL, arredondados com HALF_UP.
 
 | Método | Rota | Uso |
 |---|---|---|
 | GET | `/api/faturas` | Listar com `page`, `size`, `instalacaoId`, `competencia` e `situacao`. |
 | GET | `/api/faturas/{id}` | Consultar fatura e dados Pix. |
 
-As consultas retornam `200` em sucesso. Emissão, registro Pix e sincronização
-são controlados internamente pelos agendamentos da API. Não há endpoints
-manuais para essas ações. Falhas individuais não desfazem as demais faturas;
-as tentativas automáticas preservam as faturas existentes, sem duplicação.
+As consultas retornam `200` em sucesso. A emissão local e a sincronização de
+cobranças existentes são controladas pelos agendamentos. O fluxo de emissão não
+registra novas cobranças Pix. Não há endpoints manuais para essas ações.
 
 Uma fatura retorna `id`, `instalacaoId`, `clienteId`, `medicaoAnteriorId`,
 `medicaoAtualId`, `competencia`, `consumo`, `tarifa`, `total`, `emissao`,
@@ -249,12 +259,19 @@ identificado comparando a data atual com `vencimento` de uma fatura aberta.
 Erros nas consultas: `400` para competência, filtros ou paginação inválidos;
 `404` para fatura ausente. As consultas não dependem da disponibilidade do banco.
 
-O agendamento diário às 00:00:05 de Brasília (`America/Sao_Paulo`) processa o mês anterior,
-recuperando dias sem execução e leituras recebidas depois do dia 1. Meses mais
-antigos não são recuperados por esse agendamento. As datas originais são preservadas.
+O agendamento diário às 00h00min05s de Brasília (`America/Sao_Paulo`) considera
+o `diaEmissao` da instalação, ajustado ao último dia em meses curtos.
+Seleciona todas as medições até o instante da execução que tenham leitura
+anterior, ainda não tenham fatura e não estejam marcadas com falha, inclusive
+históricas. Uma falha marca `falhaEmissaoFatura=true` na medição, sem nova
+tentativa automática e sem desfazer as outras faturas. A emissão não registra
+logs nem resumo de lote. Não há recuperação de disparos perdidos.
 Instalações encerradas também podem ter consumo histórico faturado.
-O banco é consultado a cada 15 minutos para faturas abertas, inclusive tentativas
-de registro que falharam. Sem integração habilitada, a emissão local funciona.
+O banco é consultado para faturas abertas com `bancoId`, por padrão a cada
+30 minutos após o término da execução anterior. O intervalo é configurável por
+`BANCO_SINCRONIZACAO_MS` (padrão `1800000`). A consulta não registra novas
+cobranças; faturas sem identificação bancária permanecem pendentes.
+Sem integração habilitada, a emissão local funciona.
 
 Configuração, exemplos e endpoints a implementar no banco:
 [INTEGRACAO_BANCARIA.md](INTEGRACAO_BANCARIA.md).
